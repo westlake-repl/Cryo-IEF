@@ -1,0 +1,23 @@
+{
+    "Make motion diagnostic plots": true, 
+    "Number of movies to plot": 10, 
+    "Only process this many movies": null, 
+    "Low-memory mode": false, 
+    "Save results in 16-bit floating point": false, 
+
+    "Maximum alignment resolution (A)": 5, 
+    "B-factor during alignment": 500, 
+    "Start frame (included, 0-based)": 0, 
+    "End frame (excluded, 0-based) ": null, 
+    "Output F-crop factor": "1", 
+    "Override e/A^2": null, 
+    "Allow Variable Dose": false, 
+    "Calibrated smoothing": 0.5, 
+    "Override knots Z": null, 
+    "Override knots Y": null, 
+    "Override knots X": null, 
+
+    "Random seed": null, 
+    
+    "Number of GPUs to parallelize": 1
+}

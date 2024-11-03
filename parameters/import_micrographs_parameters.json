@@ -1,0 +1,25 @@
+{
+    "Micrographs data path": null, 
+    "Length of movie path prefix to cut": null, 
+    "Length of movie path suffix to cut": null, 
+    "Length of mic. path prefix to cut": null, 
+    "Length of mic. path suffix to cut": null, 
+    "Pixel size (A)": null, 
+    "Accelerating Voltage (kV)": null, 
+    "Spherical Aberration (mm)": null, 
+    "Total exposure dose (e/A^2)": null, 
+    "Negative Stain Data": false, 
+    "Phase Plate Data": false, 
+    "Override Exposure Group ID": null, 
+    "Skip Header Check": true, 
+    "Output Constant CTF": false, 
+
+    "Import Beam Shift Values from XML Files": false, 
+    "EPU XML metadata path": null, 
+    "Length of mic filename prefix to cut for XML correspondence": null, 
+    "Length of mic filename suffix to cut for XML correspondence": null, 
+    "Length of XML filename prefix to cut for mic correspondence": null, 
+    "Length of XML filename suffix to cut for mic correspondence": 4, 
+    
+    "Number of CPUs to parallelize during header check": 4
+}

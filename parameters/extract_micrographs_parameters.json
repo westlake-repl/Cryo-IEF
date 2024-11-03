@@ -1,0 +1,13 @@
+{
+    "Number of GPUs to parallelize (0 for CPU-only)": 1, 
+    
+    "Extraction box size (pix)": 256, 
+    "Fourier crop to box size (pix)": null, 
+    "Save results in 16-bit floating point": false, 
+    "Force re-extract CTFs from micrographs": false, 
+    "Recenter using aligned shifts": true, 
+    "Number of mics to extract": null, 
+    "Flip mic. in x before extract?": false, 
+    "Flip mic. in y before extract?": false, 
+    "Scale constant (override)": null
+}

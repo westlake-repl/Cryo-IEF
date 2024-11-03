@@ -1,0 +1,28 @@
+{
+    "Movies data path": null, 
+    "Gain reference path": null, 
+    "Defect file path": null, 
+    "Flip gain ref & defect file in X?": false, 
+    "Flip gain ref & defect file in Y?": false, 
+    "Rotate gain ref?": 0, 
+    "Raw pixel size (A)": null, 
+    "Accelerating Voltage (kV)": null, 
+    "Spherical Aberration (mm)": null, 
+    "Total exposure dose (e/A^2)": null, 
+    "Negative Stain Data": false, 
+    "Phase Plate Data": false, 
+    "Override Exposure Group ID": null, 
+    "Skip Header Check": true, 
+    "EER Number of Fractions": 40, 
+    "EER Upsampling Factor": 2, 
+    "Output Constant CTF": false, 
+
+    "Import Beam Shift Values from XML Files": false, 
+    "EPU XML metadata path": null, 
+    "Length of movie filename prefix to cut for XML correspondence": null, 
+    "Length of movie filename suffix to cut for XML correspondence": null, 
+    "Length of XML filename prefix to cut for movie correspondence": null, 
+    "Length of XML filename suffix to cut for movie correspondence": 4, 
+    
+    "Number of CPUs to parallelize": 4
+}
