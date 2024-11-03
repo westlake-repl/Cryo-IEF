@@ -4,8 +4,6 @@ We present the Cryo-EM Image Evaluation Foundation (Cryo-IEF) model, which has b
 
 ## Installation
 
-The CryoWizard pipeline utilizes APIs provided by CryoSPARC. Please ensure that you have installed [CryoSPARC](https://cryosparc.com/). 
-
 You can set up the environment using the `requirements.txt` via `pip`:
 
     (base) $ conda create --name cryowizard python=3.10
