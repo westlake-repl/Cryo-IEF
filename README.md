@@ -277,7 +277,7 @@ As shown in the figure below.
 
 ![create root path](./readme_figure/test_case_step5.png)
 
-Click the buttons in the third column to run the pipeline. Information generated during execution will be displayed in the gray box on the left.
+Click `run` to initiate the pipeline. Execution details will be displayed in the gray box on the left.
 
 ![create root path](./readme_figure/test_case_step6.png)
 
