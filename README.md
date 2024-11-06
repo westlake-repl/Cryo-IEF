@@ -25,10 +25,12 @@ After installing the environment, some necessary settings must be configured.
 1. In `path/to/cryowizard/code/CryoRanker/classification_inference_settings.yml`, set the path to the downloaded model weights:
 
 
-    path_model_proj: path/to/downloaded/CryoRanker/model/weight/
+
+        path_model_proj: path/to/downloaded/CryoRanker/model/weight/
 
 
-2. Open `path/to/cryowizard/code/MyLib/cs_login_info.json` nd configure parameters such as `license`, `host`, and `port`
+
+2. Open `path/to/cryowizard/code/MyLib/cs_login_info.json` and configure parameters such as `license`, `host`, and `port`
 for CryoSPARC server access. These settings are necessary to enable access to your CryoSPARC account.
 
 [//]: # (## Quickstart)
