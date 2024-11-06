@@ -224,7 +224,7 @@ The following is an example of the `parameters.json` file:
 
 ## Test case
 In this test case, we demonstrate how to use CryoWizard with the beta-galactosidase dataset, a small, widely-used dataset often featured in Relion tutorials. 
-The movie data for this dataset can be downloaded from the [relion tutorial](https://relion.readthedocs.io/en/release-5.0/SPA_tutorial/Introduction.html/) or from our [google drive](https://drive.google.com/drive/folders/1C9jIdC5B58ohAwrfRalTngRtLtgIWfM8?usp=sharing).
+The movie data for this dataset can be downloaded from the [relion tutorial](https://relion.readthedocs.io/en/release-5.0/SPA_tutorial/Introduction.html/) or from our [google drive](https://drive.google.com/drive/folders/1OZc8pRgy31Qk646Xfe1jLh-URWroMI6Z?usp=sharing).
 
 ### STEP 1: Prepare the parameters
 
