@@ -1,7 +1,4 @@
-# @Author : Written/modified by Yang Yan
-# @Time   : 2022/4/28 下午10:30
-# @E-mail : yanyang98@yeah.net
-# @Function :
+
 import torchvision.transforms as transforms
 # from torchtoolbox.transform import Cutout
 import numpy as np

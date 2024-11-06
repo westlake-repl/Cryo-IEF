@@ -16,7 +16,7 @@ import torch
 # from torch.utils.data import DataLoader
 # from memory_profiler import profile
 class EMDataset_from_path(Dataset):
-    """自定义数据集"""
+    '''Self-defined cryoEM dataset'''
 
     def __init__(self, mrcdata: MyMrcData, transform=None,
                  is_Normalize=None, normal_scale=10, train_with_labels=None, device='cuda', accelerator=None,
@@ -168,7 +168,7 @@ class EMDataset_from_path(Dataset):
 
 
 class EMDataset_from_rawdata(Dataset):
-    """自定义数据集"""
+    '''Self-defined cryoEM dataset'''
 
     def __init__(self, mrc_dir, mrcs_names_list, max_batch_size, transform=None,
                  accelerator=None,

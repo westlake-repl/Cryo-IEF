@@ -19,26 +19,12 @@ import Cryo_IEF.vits as vits
 from Cryo_IEF.vits import  Classifier,Classifier_2linear
 import sys
 from tqdm import tqdm
-from CryoRanker.edl_loss import edl_digamma_loss, one_hot_embedding, relu_evidence
-from CryoRanker.classification_finetune_train import loss_function
 import numpy as np
 from safetensors.torch import load_file
-import pandas as pd
 import torch.nn.functional as F
 from cryosparc.dataset import Dataset
-from sklearn.cluster import kmeans_plusplus, MiniBatchKMeans
-from sklearn.metrics.pairwise import _euclidean_distances
 import pickle
 from collections import defaultdict
-import math
-from Cryoemdata.cs_star_translate.cs2star import cs2star
-from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.cluster import DBSCAN
-from scipy.spatial.distance import cdist
-from sklearn.manifold import TSNE
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-# from thop import profile
 t_import = time.time() - t_import_start
 print('import time:{}'.format(t_import))
 
@@ -77,7 +63,7 @@ def sort_labels_by_score(scores_score_list, label_list, uid):
 
 def features_inference_from_processed_data(model, valid_loader, accelerator,
                                            ):
-
+    '''Get the particle features from the Cryo-IEF'''
     features_all = []
 
     model.eval()
@@ -189,6 +175,7 @@ def model_inference(cfg, accelerator):
 
 
 def cryo_features_main(cfg=None,job_path=None,cache_file_path=None,accelerator=None,features_max_num=1000000):
+
     '''distribution'''
     if accelerator is None:
         accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=96000))])
@@ -274,6 +261,11 @@ if __name__ == '__main__':
     parser.add_argument('--raw_data_path', default=None, type=str)
     parser.add_argument('--path_model_proj', default=None, type=str)
 
+    # parser.add_argument('--path_result_dir',
+    #                     default='/yanyang2/projects/results/cryo_select_inference/2024_0808_my_test16/', type=str)
+    # parser.add_argument('--raw_data_path',
+    #                     default='/yanyang2/dataset/classification/valset_real/galactosidase/raw_cs/J110/', type=str)
+    # parser.add_argument('--path_model_proj', default='/storage/yanyang2/projects/model_weights/CryoIEF_old', type=str)
 
     parser.add_argument('--batch_size', default=None, type=int)
     parser.add_argument('--model_name', default=None, type=str)
@@ -311,7 +303,7 @@ if __name__ == '__main__':
 
     if args.batch_size is not None:
         cfg['batch_size'] = args.batch_size
-
+    '''Main function'''
     cryo_features_main(cfg=cfg,job_path=cfg['raw_data_path'],cache_file_path=cfg['path_result_dir'],features_max_num=cfg['max_resample_number'])
 
 

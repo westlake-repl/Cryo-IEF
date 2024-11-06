@@ -17,7 +17,7 @@
   "max_particle_num_to_use": null,
   "base_abinit_particle_num": 50000,
   "abinit_particle_num_step": 2,
-  "refine_iteration_num": 3,
+  "refine_iteration_num": 2,
   "refine_iteration_min_particle_number_step": null,
   "refine_grid_num_in_each_turn": 4,
   "min_refine_truncation_confidence": 0.8,
