@@ -15,10 +15,14 @@ You can set up the environment using the `requirements.txt` via `pip`:
 
 Installation may take a few minutes. Alternatively, you can install the required packages using `conda install`. All necessary packages are listed in `requirements.txt`. Please note that `cryosparc-tools` can currently only be installed via `pip` (see [cryosparc-tools](https://tools.cryosparc.com/intro.html)).
 
+### Model weights
+
+Model weights are available at [Cryo-IEF google drive](https://drive.google.com/drive/folders/1C9jIdC5B58ohAwrfRalTngRtLtgIWfM8?usp=sharing) and [CryoRanker google drive](https://drive.google.com/drive/folders/10SUzFZB2s9sGCDkYF258Yx1C11D3tiph?usp=drive_link).
+
 ### CryoWizard Installation
 The CryoWizard pipeline utilizes APIs provided by CryoSPARC. Please ensure that you have installed [CryoSPARC](https://cryosparc.com/). Note that the version of `cryosparc-tools` specified in `requirements.txt` must correspond to your CryoSPARC installation.  
 
-Model weights are available at [Cryo-IEF google drive](https://drive.google.com/drive/folders/1C9jIdC5B58ohAwrfRalTngRtLtgIWfM8?usp=sharing) and [CryoRanker google drive](https://drive.google.com/drive/folders/10SUzFZB2s9sGCDkYF258Yx1C11D3tiph?usp=drive_link).
+By default, CryoWizard submits model inference tasks via  [Slurm](https://slurm.schedmd.com/). We recommend that users install Slurm prior to using CryoWizard. If Slurm is not installed, set `if_slurm` to false in `parameters.json`.
 
 After installing the environment, some necessary settings must be configured. 
 
@@ -174,7 +178,7 @@ The following is an example of the `parameters.json` file:
     # lane: CryoSPARC lane which will be used by CryoSPARC
     # hostname_gpus_jobnum_lists: max number of jobs running on each gpu, each item in this list is a list too, which is [node, gpu number, max job on each gpu]. e.g. "hostname_gpus_jobnum_lists": [["agpu44", 4, 2]],
     # low_cache_mode: if CryoSPARC has no enough cache space, please set this to true
-    # if_slurm: if use slurm to run model. Slurm parameters can be modified in GetConfidence.sh after running CreateParameterFiles.py
+    # if_slurm: if use slurm to run model. Slurm parameters can be modified manually in GetConfidence.sh after running CreateParameterFiles.py
     "project": "",
     "workspace": "",
     "lane": "default",
