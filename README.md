@@ -13,7 +13,7 @@ You can set up the environment using the `requirements.txt` via `pip`:
     (cryowizard) $ cd path/to/requirements
     (cryowizard) $ pip install -r requirements.txt
 
-Installation may take a few minutes. Alternatively, you can install the required packages using `conda`. All necessary packages are listed in `requirements.txt`, except for `conda install`, which can currently only be installed via `pip` (see [cryosparc-tools](https://tools.cryosparc.com/intro.html)).
+Installation may take a few minutes. Alternatively, you can install the required packages using `conda install`. All necessary packages are listed in `requirements.txt`. Please note that `cryosparc-tools` can currently only be installed via `pip` (see [cryosparc-tools](https://tools.cryosparc.com/intro.html)).
 
 ### CryoWizard Installation
 The CryoWizard pipeline utilizes APIs provided by CryoSPARC. Please ensure that you have installed [CryoSPARC](https://cryosparc.com/). Note that the version of `cryosparc-tools` specified in `requirements.txt` must correspond to your CryoSPARC installation.  
