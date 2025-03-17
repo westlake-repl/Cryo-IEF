@@ -20,132 +20,19 @@ from Cryo_IEF.vits import  Classifier,Classifier_2linear
 import sys
 from tqdm import tqdm
 from CryoRanker.edl_loss import edl_digamma_loss, one_hot_embedding, relu_evidence
-from CryoRanker.classification_finetune_train import loss_function
 import numpy as np
 from safetensors.torch import load_file
 import pandas as pd
 import torch.nn.functional as F
 from cryosparc.dataset import Dataset
 from sklearn.cluster import kmeans_plusplus, MiniBatchKMeans
-from sklearn.metrics.pairwise import _euclidean_distances
 import pickle
 from collections import defaultdict
-import math
-from Cryoemdata.cs_star_translate.cs2star import cs2star
 from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.cluster import DBSCAN
-from scipy.spatial.distance import cdist
-from sklearn.manifold import TSNE
-from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 # from thop import profile
 t_import = time.time() - t_import_start
 print('import time:{}'.format(t_import))
-
-def sort_labels_by_score(scores_score_list, label_list, uid):
-    """
-    Given a list of scores scores and a corresponding list of labels,
-    return a dictionary where the keys are the unique labels and the values
-    are lists of indices corresponding to the scores scores for that label,
-    sorted in descending order by scores score.
-
-    Parameters:
-    scores_score_list (list): A list of scores scores.
-    label_list (list): A list of labels corresponding to the scores scores.
-
-    Returns:
-    dict: A dictionary where the keys are the unique labels and the values
-          are lists of indices corresponding to the scores scores for that label,
-          sorted in descending order by scores score.
-    """
-    labels_set= list(set(label_list))
-    if len(scores_score_list) != len(label_list):
-        raise ValueError("scores score list and label list must have the same length.")
-
-    # Create a defaultdict to store the indices for each label
-    label_to_indices = defaultdict(dict)
-
-    # Zip the scores scores and labels together and sort by scores score
-    sorted_indices = sorted(range(len(scores_score_list)), key=lambda i: scores_score_list[i], reverse=True)
-
-    # Add the sorted indices to the defaultdict
-    for index in sorted_indices:
-        label_to_indices[labels_set.index(label_list[index])][uid[index]] = scores_score_list[index]
-    return dict(label_to_indices)
-
-def features_n_kmeans(mrcArray_features, k, cut_ratio, job=None, merge_threshold=0.0, centers_sampling=True, n_runs=10):
-    '''Clustering the features of particles by kmeans++'''
-
-    num_features = mrcArray_features.shape[0]
-
-    if job is not None:
-        job.log('particles num: ' + str(num_features))
-    else:
-        print('particles num: ' + str(num_features))
-
-    scaler = StandardScaler()
-    mrcArray_features_scaled = scaler.fit_transform(mrcArray_features)
-    # mrcArray_features_scaled = mrcArray_features
-
-    best_inertia = float('inf')
-    best_labels = None
-    best_centers = None
-
-    for _ in range(n_runs):
-        clf = MiniBatchKMeans(n_clusters=k, init='k-means++', n_init=3)
-        clf.fit(mrcArray_features_scaled)
-        if clf.inertia_ < best_inertia:
-            best_inertia = clf.inertia_
-            best_labels = clf.labels_
-            best_centers = clf.cluster_centers_
-
-    labels_iter = best_labels
-    centers_iter = best_centers
-
-    # 初始聚类结果
-    unique_labels = np.unique(labels_iter)
-    num_class = [np.sum(labels_iter == l) for l in unique_labels]
-
-    if job is not None:
-        job.log(f"Initial clusters: {num_class}")
-    else:
-        print(f"Initial clusters: {num_class}")
-
-    # if merge_threshold > 0:
-    #
-    #     while max(num_class) < num_features * cut_ratio:
-    #         distances = cdist(centers_iter, centers_iter, metric='cosine')  # 使用余弦距离
-    #         np.fill_diagonal(distances, np.inf)
-    #         closest_pair = np.unravel_index(distances.argmin(), distances.shape)
-    #
-    #         if distances[closest_pair] > merge_threshold:
-    #             break
-    #
-    #         merge_from, merge_to = closest_pair
-    #         labels_iter[labels_iter == unique_labels[merge_from]] = unique_labels[merge_to]
-    #
-    #         unique_labels = np.unique(labels_iter)
-    #
-    #         centers_iter = np.array([mrcArray_features_scaled[labels_iter == i].mean(axis=0) for i in unique_labels])
-    #         num_class = [np.sum(labels_iter == l) for l in unique_labels]
-    #
-    #     label_map = {old: new for new, old in enumerate(unique_labels)}
-    #     labels_iter = np.array([label_map[l] for l in labels_iter])
-    #
-    #     unique_labels = np.unique(labels_iter)
-    #     centers_iter = np.array([mrcArray_features_scaled[labels_iter == i].mean(axis=0) for i in unique_labels])
-    #     num_class = [np.sum(labels_iter == l) for l in unique_labels]
-    #
-    #     if centers_sampling:
-    #         selected_indices=sampling_iter(labels_iter,centers_iter,num_class,sample_k=4,job=job)
-    #         print('indexes with largest distance:'+str(selected_indices))
-    #
-    #     if job is not None:
-    #         job.log(f"Final clusters: {num_class}")
-    #     else:
-    #         print(f"Final clusters: {num_class}")
-
-    return labels_iter, centers_iter, np.array(num_class)
 
 def sampling_iter(labels_iter,centers_iter,num_class,sample_k,job=None):
     n = centers_iter.shape[0]
@@ -169,76 +56,6 @@ def sampling_iter(labels_iter,centers_iter,num_class,sample_k,job=None):
         dis_list.append(max_min_distance)
     print('distance list:'+str(dis_list))
     return selected_indices
-# def clustering_iter(labels_iter,centers_iter,num_features,num_class,k,iter_num=0,job=None):
-#     num_class_centers = []
-#     num_class_particles = []
-#     new_k = int(math.sqrt(k))
-#     expect_class_num_c =  new_k
-#     particles_labels_set=list(set(labels_iter))
-#     expect_particles_num = num_features / new_k
-#     clf_c = MiniBatchKMeans(n_clusters=new_k, n_init='auto')
-#     clf_c.fit(centers_iter)
-#     centers_centers = clf_c.cluster_centers_
-#     centers_labels = clf_c.labels_
-#     centers_labels_set = list(set(centers_labels))
-#     particles_num_for_classes_np = np.array(num_class)
-#
-#     class_to_be_combined = []
-#     for l in centers_labels_set:
-#         particles_n = np.sum(particles_num_for_classes_np[centers_labels == l])
-#         class_n = np.sum(centers_labels == l)
-#         num_class_centers.append(class_n)
-#         num_class_particles.append(particles_n)
-#         if class_n > 0.35 * k or particles_n > 0.35 * num_features:
-#             class_to_be_combined.append(l)
-#
-#
-#
-#     if len(class_to_be_combined) == 0:
-#         i_to_combined = {num_class_centers.index(max(num_class_centers))}
-#         i_to_combined.add(num_class_particles.index(max(num_class_particles)))
-#         for i_c in i_to_combined:
-#             class_to_be_combined.append(i_c)
-#     flag=0
-#     labels_change_dict={}
-#     new_centers = []
-#     new_particles_num_of_diff_classes=[]
-#     for i in particles_labels_set:
-#         if not i in labels_change_dict.keys():
-#             if not centers_labels[i] in class_to_be_combined:
-#                 labels_change_dict[i]=flag
-#                 new_centers.append(centers_iter[i])
-#                 new_particles_num_of_diff_classes.append(num_class[i])
-#             else:
-#
-#                 particles_labels_combined_set=[index for index, value in enumerate(centers_labels) if value == centers_labels[i]]
-#                 for ii in particles_labels_combined_set:
-#                     if not ii in labels_change_dict.keys():
-#                         labels_change_dict[ii]=flag
-#                 new_centers.append(centers_centers[centers_labels[i]])
-#                 new_particles_num_of_diff_classes.append(np.sum(np.array(num_class)[centers_labels==centers_labels[i]]))
-#             flag+=1
-#
-#
-#     for i in range(labels_iter.shape[0]):
-#         labels_iter[i]=labels_change_dict[labels_iter[i]]
-#
-#
-#
-#     if job is not None:
-#         job.log('iter: '+str(iter_num))
-#         job.log(str(num_class_centers))
-#         job.log(str(new_particles_num_of_diff_classes))
-#         job.log(str(num_class_particles))
-#     else:
-#         print('iter: '+str(iter_num))
-#         print('number of class centers')
-#         print(num_class_centers)
-#         print('number of class particles')
-#         print(num_class_particles)
-#         print('number of particles after combination')
-#         print(new_particles_num_of_diff_classes)
-#     return labels_iter,new_centers,new_particles_num_of_diff_classes
 
 
 def inference_processed_data(model, valid_loader, accelerator, is_calculate_acc=False, use_bnn_head=False,
@@ -460,124 +277,6 @@ def model_inference(cfg, accelerator,use_features=False,features_max_num=50000):
 
 
 
-# def results_score_cut(cfg, accelerator):
-#     if accelerator.is_local_main_process:
-#         from Other_tools.select_particles import divide_selected_particles_id, get_particles_from_cs
-#         from Cryoemdata.cs_star_translate.cs2star import cs2star
-#         tb_writer = SummaryWriter(log_dir=cfg['path_result_dir'] + "/tensorboard/")
-#         labels_predicted = pd.read_csv(cfg['path_result_dir'] + '/labels_predicted.csv')['labels_predicted'].values
-#
-#         if cfg['is_calculate_acc']:
-#             labels_true = pd.read_csv(cfg['path_result_dir'] + '/labels_true.csv')['labels_true'].values
-#             recall_correct_num_original = sum((labels_true == 1) & (labels_predicted == 1))
-#             recall_num_all_original = sum(labels_true == 1)
-#             precision_num_all_original = sum(labels_predicted == 1)
-#             if recall_num_all_original > 0:
-#                 recall_original = recall_correct_num_original / recall_num_all_original
-#             else:
-#                 recall_original = 0
-#             if precision_num_all_original > 0:
-#                 precision_original = recall_correct_num_original / precision_num_all_original
-#             else:
-#                 precision_original = 0
-#             accelerator.print('original acc: ' + str(sum(labels_predicted == labels_true) / len(labels_predicted)))
-#             accelerator.print('original recall: ' + str(recall_original))
-#             accelerator.print('original precision: ' + str(precision_original))
-#         else:
-#             labels_true = None
-#
-#         accelerator.print('original selected particles number: ' + str(sum(labels_predicted == 1)))
-#         if cfg['model']['use_bnn_head'] or cfg['model']['use_edl_loss']:
-#             uncertainty_list = pd.read_csv(cfg['path_result_dir'] + '/uncertainty_list.csv')['uncertainty_list'].values
-#             selected_particles_id_all, unselected_particles_id, selected_particles_uncertainty, unselected_particles_uncertainty = divide_selected_particles_id(
-#                 labels_predicted, [1], uncertainty_list)
-#         else:
-#             from Cryoemdata.utils import plot_scores_interval_inf
-#             scores_predicted_list = pd.read_csv(cfg['path_result_dir'] + '/scores_predicted_list.csv')[
-#                 'scores_predicted_list'].values
-#             scores_all_list = pd.read_csv(cfg['path_result_dir'] + '/scores_all_list.csv')[
-#                 'scores_all_list'].values
-#             fig_num, fig_acc = plot_scores_interval_inf(scores_all_list, labels_predicted, labels_true,
-#                                                             cfg['path_result_dir'])
-#             tb_writer.add_figure('Evaluation figures/Particles num of different scores interval', fig_num)
-#             if fig_acc is not None:
-#                 tb_writer.add_figure('Evaluation figures/Classification acc of different scores interval', fig_acc)
-#                 tb_writer.add_pr_curve('evaluation data/precision recall curve', np.array(labels_true),
-#                                        np.array(scores_predicted_list))
-#
-#         select_ratio_step = (cfg['scores_cut']['ratio'][1] - cfg['scores_cut']['ratio'][0]) / \
-#                             cfg['scores_cut']['step_num']
-#         for i in range(cfg['scores_cut']['step_num'] + 1):
-#             select_ratio = cfg['scores_cut']['ratio'][0] + i * select_ratio_step
-#             final_selected_num = int(len(labels_predicted) * select_ratio)
-#             accelerator.print()
-#             accelerator.print('Ratio: ' + str(select_ratio))
-#
-#             new_selected_particles_id = score_cut_step(len(labels_predicted), scores_predicted_list, accelerator,
-#                                                        final_selected_num)
-#
-#             accelerator.print('With select ratio ' + str(select_ratio) + ', final selected particles number: ' + str(
-#                 len(new_selected_particles_id)))
-#
-#             if cfg['is_calculate_acc']:
-#                 new_labels_predicted = np.zeros(len(labels_predicted))
-#                 new_labels_predicted[new_selected_particles_id] = 1
-#                 recall_correct_num = sum((labels_true == 1) & (new_labels_predicted == 1))
-#                 recall_num_all = sum(labels_true == 1)
-#                 precision_num_all = sum(new_labels_predicted == 1)
-#                 if recall_num_all > 0:
-#                     recall = recall_correct_num / recall_num_all
-#                 else:
-#                     recall = 0
-#                 if precision_num_all > 0:
-#                     precision = recall_correct_num / precision_num_all
-#                 else:
-#                     precision = 0
-#                 acc = sum(new_labels_predicted == labels_true) / len(new_labels_predicted)
-#                 accelerator.print(
-#                     'final acc: ' + str(acc))
-#                 accelerator.print('final recall: ' + str(recall))
-#                 accelerator.print('final precision: ' + str(precision))
-#                 tb_writer.add_scalar("evaluation data/Acc:", acc, i)
-#                 tb_writer.add_scalar("evaluation data/Recall:", recall, i)
-#                 tb_writer.add_scalar("evaluation data/Precision:", precision, i)
-#
-#             if cfg['particle_csfile_path'] is not None:
-#                 if not os.path.exists(cfg['path_result_dir'] + '/selected_particles/'):
-#                     os.makedirs(cfg['path_result_dir'] + '/selected_particles/')
-#                 if not os.path.exists(cfg['path_result_dir'] + '/selected_particles/selected_particles.cs'):
-#                     selected_particles_id_all = [index for index, j in enumerate(labels_predicted) if j == 1]
-#                     selected_particles = get_particles_from_cs(cfg['particle_csfile_path'], selected_particles_id_all)
-#                     selected_particles.save(
-#                         cfg['path_result_dir'] + '/selected_particles/selected_particles.cs')
-#                     if len(selected_particles_id_all) > 0:
-#                         cs2star(
-#                             cfg['path_result_dir'] + '/selected_particles/selected_particles.cs',
-#                             cfg['path_result_dir'] + '/selected_particles/selected_particles.star')
-#
-#                 final_selected_particles = get_particles_from_cs(cfg['particle_csfile_path'], new_selected_particles_id)
-#                 final_selected_particles.save(
-#                     cfg['path_result_dir'] + '/selected_particles/selected_particles_' + str(
-#                         select_ratio) + '.cs')
-#                 if len(new_selected_particles_id) > 0:
-#                     cs2star(
-#                         cfg['path_result_dir'] + '/selected_particles/selected_particles_' + str(
-#                             select_ratio) + '.cs',
-#                         cfg['path_result_dir'] + '/selected_particles/selected_particles_' + str(
-#                             select_ratio) + '.star')
-
-
-
-
-# def score_cut_step(value_len, scores_all, accelerator, num_remain, reverse=True):
-#     id_scores_dict = dict(zip(list(range(value_len)), scores_all))
-#     sorted_id_scores_dict = sorted(id_scores_dict.items(), key=lambda x: x[1], reverse=reverse)
-#     new_selected_id = [i[0] for i in sorted_id_scores_dict[:num_remain]]
-#     # accelerator.print('selected particles number with high scores: ' + str(len(new_selected_id)))
-#     # new_labels_p=np.zeros(value_len)
-#     # new_labels_p[new_selected_id]=1
-#     return new_selected_id
-
 
 def cryo_select_main(cfg=None,job_path=None,cache_file_path=None,accelerator=None,use_features=False,features_max_num=1000000):
     '''distribution'''
@@ -672,53 +371,6 @@ def cryo_select_main(cfg=None,job_path=None,cache_file_path=None,accelerator=Non
 
     return new_cs_data,scores,features_all
 
-# def save_csfile_different_classes(path,labels,csfile,selected_index):
-#     labels_set=list(set(labels))
-#     for label in labels_set:
-#         selected_particles_id = [selected_index[index] for index, j in enumerate(labels) if j == label]
-#         selected_particles = csfile.take(selected_particles_id)
-#         if not os.path.exists(path + '/selected_particles_cs/'):
-#             os.makedirs(path + '/selected_particles_cs/')
-#         if not os.path.exists(path + '/selected_particles_star/'):
-#             os.makedirs(path + '/selected_particles_star/')
-#         selected_particles.save(
-#             path + '/selected_particles_cs/selected_particles_'+str(label)+'.cs')
-#         if len(selected_particles_id) > 0:
-#             cs2star(
-#                 path + '/selected_particles_cs/selected_particles_'+str(label)+'.cs',
-#                 path + '/selected_particles_star/selected_particles_'+str(label)+'.star')
-
-# def resample_and_save_cs(cs_whole_particles,sorted_indices_dict,path,particle_number_truncation_point,except_class=[]):
-#     k_set = list(sorted_indices_dict.keys())
-#     for class_remove in except_class:
-#         k_set.remove(class_remove)
-#
-#     selected_uids = []
-#     key_ptr = [0 for _ in range(len(sorted_indices_dict.keys()))]
-#     sorted_indices_list = [sorted(sorted_indices_dict[i].items(), key=lambda x: x[1], reverse=True) for i in range(len(sorted_indices_dict.keys()))]
-#
-#     particles_sum=0
-#     for i in range(len(sorted_indices_dict.keys())):
-#         particles_sum+=len(sorted_indices_dict[i])
-#
-#     while (len(selected_uids) < particle_number_truncation_point):
-#         for int_key in k_set:
-#             if int_key not in except_class:
-#                 if (key_ptr[int_key] < len(sorted_indices_list[int_key])):
-#                     selected_uids.append(sorted_indices_list[int_key][key_ptr[int_key]][0])
-#                     key_ptr[int_key] += 1
-#                 if (len(selected_uids) >= particle_number_truncation_point):
-#                     break
-#     output_particles_dataset = cs_whole_particles.query({'uid': selected_uids})
-#     if not os.path.exists(path + '/selected_particles_cs/'):
-#         os.makedirs(path + '/selected_particles_cs/')
-#     if not os.path.exists(path + '/selected_particles_star/'):
-#         os.makedirs(path + '/selected_particles_star/')
-#     output_particles_dataset.save(path + '/selected_particles_cs/whole_selected_particles_'+str(len(selected_uids))+'.cs')
-#     if len(selected_uids) > 0:
-#         cs2star(
-#             path + '/selected_particles_cs/whole_selected_particles_' + str(len(selected_uids)) + '.cs',
-#             path + '/selected_particles_star/whole_selected_particles_'+str(particles_sum)+'_' + str(len(selected_uids)) + '.star')
 
 if __name__ == '__main__':
     '''get config'''

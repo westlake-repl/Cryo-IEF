@@ -11,6 +11,7 @@ import time
 import os
 
 import CryoRanker_inference
+import CryoClustering_inference
 import MyLib.CSLogin as CSLogin
 import MyLib.MyJobAPIs as MyJobAPIs
 import MyLib.mytoolbox as mytoolbox
@@ -169,7 +170,7 @@ def CreateExternal_GetConfidence(DealJobs_instance, source_particle_job, source_
     return job
 
 
-def CreateExternal_SelectParticles(DealJobs_instance, source_particle_job, source_particle_parameter_name, confidence_dict, particle_number_truncation_point, particle_num_multiple_for_cluster, features_dict, k):
+def CreateExternal_SelectParticles(DealJobs_instance, source_particle_job, source_particle_parameter_name, scores_dict, particle_number_truncation_point, particle_num_multiple_for_cluster, features_dict, k):
     # DealJobs_instance: 实例化的DealJobs，使用自己的账号密码实例化
     # source_particle_job: 输入的job，例如'J1'
     # source_particle_parameter_name: 输入job的output name，例如'imported_particles'
@@ -198,11 +199,11 @@ def CreateExternal_SelectParticles(DealJobs_instance, source_particle_job, sourc
         '''Filter particles according to confidence_truncation_point'''
         if particle_num_multiple_for_cluster is not None:
             unbalanced_particle_number_truncation_point = (int)(math.floor(particle_number_truncation_point * particle_num_multiple_for_cluster))
-            if (unbalanced_particle_number_truncation_point > len(confidence_dict.items())):
-                unbalanced_particle_number_truncation_point = len(confidence_dict.items())
+            if (unbalanced_particle_number_truncation_point > len(scores_dict.items())):
+                unbalanced_particle_number_truncation_point = len(scores_dict.items())
 
             temp_selected_uids = []
-            sorted_confidence_dict = sorted(confidence_dict.items(), key=lambda x: x[1], reverse=True)
+            sorted_confidence_dict = sorted(scores_dict.items(), key=lambda x: x[1], reverse=True)
             for confidence_dict_item_ptr in range(unbalanced_particle_number_truncation_point):
                 temp_selected_uids.append(sorted_confidence_dict[confidence_dict_item_ptr][0])
 
@@ -211,16 +212,16 @@ def CreateExternal_SelectParticles(DealJobs_instance, source_particle_job, sourc
             job.log('Start sorting confidence...')
             for i in range(unbalanced_particle_number_truncation_point):
                 select_uid = temp_selected_uids[i]
-                confidence_sorted.append(confidence_dict[select_uid])
+                confidence_sorted.append(scores_dict[select_uid])
                 features_sorted.append(features_dict[(int)(select_uid)])
             features_all_sorted = np.array(features_sorted)
             job.log('Sorting confidence succeed!')
 
             job.log('Start clustering...')
-            labels_predict, centers_predict, num_class = CryoRanker_inference.features_n_kmeans(features_all_sorted, k, job, merge_threshold=0)
-            sorted_indices_dict = CryoRanker_inference.sort_labels_by_score(confidence_sorted, labels_predict, temp_selected_uids)
+            labels_predict, centers_predict, num_class = CryoClustering_inference.features_kmeans(features_all_sorted, k, job, merge_threshold=0)
+            sorted_indices_dict = CryoClustering_inference.sort_labels_by_score(confidence_sorted, labels_predict, temp_selected_uids)
             # k = len(sorted_indices_dict.keys())
-            job.log('Cluster succeed!')
+            job.log('Clustering succeed!')
 
             # job.log('Start selecting particles...')
             # selected_uids = []
@@ -246,7 +247,7 @@ def CreateExternal_SelectParticles(DealJobs_instance, source_particle_job, sourc
                 job.save_output(add_output_name, output_particles_dataset)
         else:
             selected_uids = []
-            sorted_confidence_dict = sorted(confidence_dict.items(), key=lambda x: x[1], reverse=True)
+            sorted_confidence_dict = sorted(scores_dict.items(), key=lambda x: x[1], reverse=True)
             safe_particle_number = particle_number_truncation_point if (particle_number_truncation_point <= len(sorted_confidence_dict)) else len(sorted_confidence_dict)
             for confidence_dict_item_ptr in range(safe_particle_number):
                 selected_uids.append(sorted_confidence_dict[confidence_dict_item_ptr][0])

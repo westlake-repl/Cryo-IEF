@@ -8,12 +8,12 @@ We present the Cryo-EM Image Evaluation Foundation (Cryo-IEF) model, which has b
 
 You can set up the environment using the `requirements.txt` via `pip`:
 
-    (base) $ conda create --name cryowizard python=3.10
-    (base) $ conda activate cryowizard
-    (cryowizard) $ cd path/to/requirements
-    (cryowizard) $ pip install -r requirements.txt
+    (base) $ conda create --name cryo_ief python=3.10
+    (base) $ conda activate cryo_ief
+    (cryo_ief) $ cd path/to/requirements
+    (cryo_ief) $ pip install -r requirements.txt
 
-Installation may take a few minutes. Alternatively, you can install the required packages using `conda install`. All necessary packages are listed in `requirements.txt`. Please note that `cryosparc-tools` can currently only be installed via `pip` (see [cryosparc-tools](https://tools.cryosparc.com/intro.html)).
+Installation may take a few minutes. 
 
 ### Model weights
 
@@ -26,7 +26,7 @@ By default, CryoWizard submits model inference tasks via  [Slurm](https://slurm.
 
 After installing the environment, some necessary settings must be configured. 
 
-1. In `path/to/cryowizard/code/CryoRanker/classification_inference_settings.yml`, set the path to the downloaded model weights:
+1. In `path/to/Cryo-IEF/code/CryoRanker/classification_inference_settings.yml`, set the path to the downloaded model weights:
 
 
 
@@ -34,7 +34,7 @@ After installing the environment, some necessary settings must be configured.
 
 
 
-2. Open `path/to/cryowizard/code/MyLib/cs_login_info.json` and configure parameters such as `license`, `host`, and `port`
+2. Open `path/to/Cryo-IEF/code/MyLib/cs_login_info.json` and configure parameters such as `license`, `host`, and `port`
 for CryoSPARC server access. These settings are necessary to enable access to your CryoSPARC account.
 
 [//]: # (## Quickstart)
@@ -42,28 +42,28 @@ for CryoSPARC server access. These settings are necessary to enable access to yo
 Cryo-IEF is a foundation model for cryo-EM image evaluation, pre-trained on an extensive dataset using unsupervised learning. 
 To generate particle features with Cryo-IEF encoder, run the following command:
 
-    (base) $ conda activate cryowizard
-    (cryowizard) $ python path/to/cryowizard/code/CryoIEF_inference.py --path_result_dir dir_to_save_results --path_model_proj dir_to_the_CryoIEF_model_weight --raw_data_path dir_to_cryoSPARC_job
+    (base) $ conda activate cryo_ief
+    (cryo_ief) $ accelerate launch path/to/Cryo-IEF/code/CryoIEF_inference.py --path_result_dir dir/to/save/results --path_model_proj dir/to/CryoIEF_model_weight --raw_data_path dir/to/cryoSPARC_job
 Cryo-IEF processes only cryoSPARC job types that output particles, such as `Extracted Particles`, `Restack Particles`, and `Particles Sets`. 
 
-The particle features extracted by the Cryo-IEF encoder are saved by default in `dir_to_save_results/features_all.data`.
-The order of features aligns with the particle order in the`.cs` file located in `dir_to_cryoSPARC_job`.
+The particle features extracted by the Cryo-IEF encoder are saved by default in `dir/to/save/results/features_all.data`.
+The order of features aligns with the particle order in the`.cs` file located in `dir/to/cryoSPARC_job`.
 
-During Cryo-IEF inference, raw data is preprocessed and cached in `dir_to_save_results/processed_data`.
+During Cryo-IEF inference, raw data is preprocessed and cached in `dir/to/save/results/processed_data`.
 After inference, this cache can be deleted while retaining the other output files.
 
 ## CryoRanker
 CryoRanker integrates Cryo-IEF’s backbone encoder with an additional classification head, 
 fine-tuned on a labeled dataset to rank particle images by quality.
 
-    (base) $ conda activate cryowizard
-    (cryowizard) $ python path/to/cryowizard/code/CryoRanker_inference.py --path_result_dir dir_to_save_results --path_model_proj dir_to_the_CryoRanker_model_weight --raw_data_path dir_to_cryoSPARC_job
+    (base) $ conda activate cryo_ief
+    (cryo_ief) $ accelerate launch path/to/Cryo-IEF/code/CryoRanker_inference.py --path_result_dir dir/to/save/results --path_model_proj dir/to/CryoRanker_model_weight --raw_data_path dir/to/cryoSPARC_job
 CryoRanker processes only cryoSPARC job types that output particles, such as `Extracted Particles`, `Restack Particles`, and `Particles Sets`. 
 
-The predicted scores are saved in `dir_to_save_results/scores_predicted_list.csv`.
+The predicted scores are saved in `dir/to/save/results/scores_predicted_list.csv`.
 The order of scores aligns with the particle order in the`.cs` file located in `dir_to_cryoSPARC_job`.
 
-During CryoRanker inference, raw data is preprocessed and cached in `dir_to_save_results/processed_data`.
+During CryoRanker inference, raw data is preprocessed and cached in `dir/to/save/results/processed_data`.
 After inference, this cache can be deleted while retaining the other output files.
 
 ## CryoWizard ![Beta Badge](https://img.shields.io/badge/status-beta-yellow)
@@ -74,9 +74,9 @@ After inference, this cache can be deleted while retaining the other output file
 
 To launch the web application:
 
-    (base) $ conda activate cryowizard
-    (cryowizard) $ cd path/to/cryo-wizard-web
-    (cryowizard) $ python CryoSelectWebApp.py
+    (base) $ conda activate cryo_ief
+    (cryo_ief) $ cd path/to/Cryo-IEF/cryo-wizard-web
+    (cryo_ief) $ python CryoSelectWebApp.py
 
 To change the web interface port, modify the last line in `CryoSelectWebApp.py` before launching. The default port is set to 38080.
 
@@ -118,19 +118,19 @@ Once the pipeline completes, click the `Download Map` to download the `map_sharp
 
 Create a pipeline project folder and parameter files:
 
-    (base) $ conda activate cryowizard
-    (cryowizard) $ cd path/to/your/project
-    (cryowizard) $ python path/to/cryowizard/code/CreateParameterFiles.py
+    (base) $ conda activate cryo_ief
+    (cryo_ief) $ cd path/to/your/project
+    (cryo_ief) $ python path/to/Cryo-IEF/code/CreateParameterFiles.py
 
-After executing these commands, a `parameter` folder will be created, and parameter files will be copied to this folder from `path/to/cryowizard/code/parameters`.
+After executing these commands, a `parameter` folder will be created, and parameter files will be copied to this folder from `path/to/Cryo-IEF/code/parameters`.
 
 To create import job folders, consider the following example: if your raw data for a single target protein is separated, you may need to create two import movie jobs, one import micrograph job, and one import particle stack job to import all this raw data:
 
     ...
-    (cryowizard) $ python path/to/cryowizard/code/CreateParameterFiles.py movie
-    (cryowizard) $ python path/to/cryowizard/code/CreateParameterFiles.py movie
-    (cryowizard) $ python path/to/cryowizard/code/CreateParameterFiles.py micrograph
-    (cryowizard) $ python path/to/cryowizard/code/CreateParameterFiles.py particle
+    (cryo_ief) $ python path/to/Cryo-IEF/code/CreateParameterFiles.py movie
+    (cryo_ief) $ python path/to/Cryo-IEF/code/CreateParameterFiles.py movie
+    (cryo_ief) $ python path/to/Cryo-IEF/code/CreateParameterFiles.py micrograph
+    (cryo_ief) $ python path/to/Cryo-IEF/code/CreateParameterFiles.py particle
 
 After executing these commands, four folders will be created in the `parameter` folder: `import_parameters_0`, `import_parameters_1`, `import_parameters_2`, `import_parameters_3`, 
 corresponding to the movie, movie, micrograph, and particle jobs. Each `import_parameters_` folder will contain intact import parameters identical to those of CryoSPARC import jobs.
@@ -140,21 +140,21 @@ All parameter files in the `parameter` folder and `import_parameters_` folders c
 Once you have adjusted the parameters, proceed to import data and preprocess:
 
     ...
-    (cryowizard) $ python path/to/cryowizard/code/ImportAndExtract.py
+    (cryo_ief) $ python path/to/Cryo-IEF/code/ImportAndExtract.py
 
 After running this command, jobs for import, motion correction, CTF estimation, blob picker, and extraction will be created and executed in CryoSPARC. All particles will be compiled in a restack job within CryoSPARC.
 
 Now execute the following command:
 
     ...
-    (cryowizard) $ python path/to/cryowizard/code/SelectAndRefine.py
+    (cryo_ief) $ python path/to/Cryo-IEF/code/SelectAndRefine.py
 
 This program utilizes our model to score and automatically select particles, which will then be used to reconstruct and refine the map volume. Upon completion, you can review the results in CryoSPARC.
 
 Additionally, we provide a command to obtain the top `N` particles sorted by scores generated by the model after running `SelectAndRefine.py`:
 
     ...
-    (cryowizard) $ python path/to/cryowizard/code/TruncateParticles.py N
+    (cryo_ief) $ python path/to/Cryo-IEF/code/TruncateParticles.py N
 
 This command will create an external job containing the output with the top `N` particles.
 

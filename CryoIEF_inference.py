@@ -1,6 +1,6 @@
 import time
 
-t_import_start = time.time()
+# t_import_start = time.time()
 import torch
 import os
 import time
@@ -22,11 +22,11 @@ from tqdm import tqdm
 import numpy as np
 from safetensors.torch import load_file
 import torch.nn.functional as F
-from cryosparc.dataset import Dataset
+# from cryosparc.dataset import Dataset
 import pickle
 from collections import defaultdict
-t_import = time.time() - t_import_start
-print('import time:{}'.format(t_import))
+# t_import = time.time() - t_import_start
+# print('import time:{}'.format(t_import))
 
 def sort_labels_by_score(scores_score_list, label_list, uid):
     """
@@ -89,7 +89,7 @@ def merge_and_sort_lists(list1, list2, max_num):
     # 如果排序后的列表长度小于max_num，返回全部；否则返回前max_num个元素
     return sorted_list[:max_num]
 
-def model_inference(cfg, accelerator):
+def CryoIEF_model_inference(cfg, accelerator):
     '''model'''
     # model = vits.__dict__["vit_small"](num_classes=cfg['model']['num_classes'], dynamic_img_size=True)
     # model.patch_embed.proj = nn.Conv2d(1, 384, kernel_size=(16, 16), stride=(16, 16))
@@ -222,7 +222,7 @@ def cryo_features_main(cfg=None,job_path=None,cache_file_path=None,accelerator=N
 
     if cfg['processed_data_path'] is not None or (os.path.exists(new_cs_data_path) and os.path.exists(processed_data_path + '/output_tif_path.data')):
         # processed_data_path = cfg['processed_data_path']
-        new_cs_data = Dataset.load(new_cs_data_path)
+        # new_cs_data = Dataset.load(new_cs_data_path)
         if cfg['processed_data_path'] is None:
             cfg['processed_data_path'] = processed_data_path
 
@@ -242,14 +242,14 @@ def cryo_features_main(cfg=None,job_path=None,cache_file_path=None,accelerator=N
 
         accelerator.wait_for_everyone()
         cfg['processed_data_path'] = processed_data_path
-        new_cs_data = Dataset.load(new_cs_data_path)
+        # new_cs_data = Dataset.load(new_cs_data_path)
         cfg['is_calculate_acc'] = False
 
     else:
         print('We need processed_data_path or raw_data_path to generate the dataset!')
         sys.exit(0)
     accelerator.print('Time of start inference: '+time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) )
-    model_inference(cfg, accelerator)
+    CryoIEF_model_inference(cfg, accelerator)
     accelerator.print('Time of finish inference: '+time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) )
 
 
@@ -260,12 +260,6 @@ if __name__ == '__main__':
     parser.add_argument('--path_result_dir', default=None, type=str)
     parser.add_argument('--raw_data_path', default=None, type=str)
     parser.add_argument('--path_model_proj', default=None, type=str)
-
-    # parser.add_argument('--path_result_dir',
-    #                     default='/yanyang2/projects/results/cryo_select_inference/2024_0808_my_test16/', type=str)
-    # parser.add_argument('--raw_data_path',
-    #                     default='/yanyang2/dataset/classification/valset_real/galactosidase/raw_cs/J110/', type=str)
-    # parser.add_argument('--path_model_proj', default='/storage/yanyang2/projects/model_weights/CryoIEF_old', type=str)
 
     parser.add_argument('--batch_size', default=None, type=int)
     parser.add_argument('--model_name', default=None, type=str)

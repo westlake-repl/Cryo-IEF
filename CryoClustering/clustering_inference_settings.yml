@@ -1,0 +1,60 @@
+# Output path
+path_result_dir: /yanyang2/results/cryo_clustering/debug/25_2_26_t2
+path_model_proj: null
+features_path: null
+#raw_data_path: null
+raw_data_path: /yuanfajie/cryosparc_projects/CS-testproject-fsq/J581/
+processed_data_path: null
+#processed_data_path: '/yanyang2/dataset/test/pose_eval_data/10217/2_views_processed/'
+#processed_data_path: '//yanyang2/dataset/test/pose_eval_data/10096/4_views_processed5//''
+pixelsize: null
+particle_csfile_path: null
+
+valset_name: []
+max_resample_number: 50000
+max_resample_selected: 50000
+except_class_num: 0
+is_calculate_acc: false
+use_features: true
+batch_size: 512
+k: 4
+cut_ratio: 0.0
+
+confidence_cut:
+    is_confidence_cut: true
+    ratio: [0.02,0.4]
+    step_num: 10
+
+model:
+   model_name: moco_v3
+   use_bnn_head: false
+   use_edl_loss: false
+   num_classes: 2
+   backbone_name: 'vit_base'
+   use_bn: true
+   stop_grad_conv1: false
+   patch_size: 14
+#   classifier: '2linear'
+   classifier: '1linear'
+
+
+
+
+augmentation_kwargs:
+
+   augmentation_strategy: user-defined
+
+   is_Normalize: true
+
+
+   frequency_domain:
+      strategy: null  # patch or whole or None
+      is_add: true
+      is_only: false
+
+
+## Preprocess
+
+preprocess_kwargs:
+   crop_ratio: null
+   resize: 224
