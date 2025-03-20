@@ -77,7 +77,7 @@ To launch the web application:
 
     (base) $ conda activate cryo_ief
     (cryo_ief) $ cd path/to/Cryo-IEF/cryo-wizard-web
-    (cryo_ief) $ python CryoSelectWebApp.py
+    (cryo_ief) $ python CryoWizardWebApp.py
 
 To change the web interface port, modify the last line in `CryoSelectWebApp.py` before launching. The default port is set to 38080.
 
