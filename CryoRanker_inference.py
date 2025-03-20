@@ -16,7 +16,7 @@ from accelerate import Accelerator
 from accelerate.utils import InitProcessGroupKwargs
 from datetime import timedelta
 import Cryo_IEF.vits as vits
-from Cryo_IEF.vits import  Classifier,Classifier_2linear
+from Cryo_IEF.vits import  Classifier,Classifier_2linear,Classifier_new
 import sys
 from tqdm import tqdm
 from CryoRanker.edl_loss import edl_digamma_loss, one_hot_embedding, relu_evidence
@@ -190,7 +190,10 @@ def model_inference(cfg, accelerator,use_features=False,features_max_num=50000):
 
     in_channels = model.head.in_features
 
-    if cfg['model']['classifier']=='2linear':
+    if cfg['model']['classifier']=='new':
+        model.norm = torch.nn.Identity()
+        model.head=Classifier_new(input_dim=in_channels, output_dim=cfg['model']['num_classes'])
+    elif cfg['model']['classifier']=='2linear':
         model.head=Classifier_2linear(input_dim=in_channels, output_dim=cfg['model']['num_classes'])
     else:
         model.head = Classifier(input_dim=in_channels, output_dim=cfg['model']['num_classes'])
@@ -290,7 +293,7 @@ def cryo_select_main(cfg=None,job_path=None,cache_file_path=None,accelerator=Non
         cfg = EasyDict()
 
         with open(
-                 os.path.dirname(os.path.abspath(__file__))+'/CryoRanker/classification_inference_settings.yml',
+                 os.path.dirname(os.path.abspath(__file__))+'/CryoRanker/cryoranker_inference_settings.yml',
                 'r') as stream:
             config = yaml.safe_load(stream)
 
@@ -391,7 +394,7 @@ if __name__ == '__main__':
         args.path_proj_dir = os.path.dirname(os.path.abspath(__file__))
 
     with open(
-            args.path_proj_dir + '/CryoRanker/classification_inference_settings.yml',
+            args.path_proj_dir + '/CryoRanker/cryoranker_inference_settings.yml',
             'r') as stream:
         config = yaml.safe_load(stream)
     # else:

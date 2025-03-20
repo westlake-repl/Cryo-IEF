@@ -5,8 +5,6 @@ features_path: null
 #raw_data_path: null
 raw_data_path: /yuanfajie/cryosparc_projects/CS-testproject-fsq/J581/
 processed_data_path: null
-#processed_data_path: '/yanyang2/dataset/test/pose_eval_data/10217/2_views_processed/'
-#processed_data_path: '//yanyang2/dataset/test/pose_eval_data/10096/4_views_processed5//''
 pixelsize: null
 particle_csfile_path: null
 

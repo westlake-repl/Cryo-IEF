@@ -187,7 +187,7 @@ def cryo_features_main(cfg=None,job_path=None,cache_file_path=None,accelerator=N
         cfg = EasyDict()
 
         with open(
-                 os.path.dirname(os.path.abspath(__file__))+'/CryoRanker/classification_inference_settings.yml',
+                 os.path.dirname(os.path.abspath(__file__))+'/CryoRanker/cryoranker_inference_settings.yml',
                 'r') as stream:
             config = yaml.safe_load(stream)
 
@@ -272,7 +272,7 @@ if __name__ == '__main__':
     args.path_proj_dir = os.path.dirname(os.path.abspath(__file__))
 
     with open(
-            args.path_proj_dir + '/CryoRanker/classification_inference_settings.yml',
+            args.path_proj_dir + '/CryoRanker/cryoranker_inference_settings.yml',
             'r') as stream:
         config = yaml.safe_load(stream)
     # else:
