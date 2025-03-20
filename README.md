@@ -19,23 +19,7 @@ Installation may take a few minutes.
 
 Model weights are available at [Cryo-IEF google drive](https://drive.google.com/drive/folders/1C9jIdC5B58ohAwrfRalTngRtLtgIWfM8?usp=sharing) and [CryoRanker google drive](https://drive.google.com/drive/folders/10SUzFZB2s9sGCDkYF258Yx1C11D3tiph?usp=drive_link).
 
-### CryoWizard Installation
-The CryoWizard pipeline utilizes APIs provided by CryoSPARC. Please ensure that you have installed [CryoSPARC](https://cryosparc.com/). Note that the version of `cryosparc-tools` specified in `requirements.txt` must correspond to your CryoSPARC installation.  
 
-By default, CryoWizard submits model inference tasks via  [Slurm](https://slurm.schedmd.com/). We recommend that users install Slurm prior to using CryoWizard. If Slurm is not installed, set `if_slurm` to false in `parameters.json`.
-
-After installing the environment, some necessary settings must be configured. 
-
-1. In `path/to/Cryo-IEF/code/CryoRanker/classification_inference_settings.yml`, set the path to the downloaded model weights:
-
-
-
-        path_model_proj: path/to/downloaded/CryoRanker/model/weight/
-
-
-
-2. Open `path/to/Cryo-IEF/code/MyLib/cs_login_info.json` and configure parameters such as `license`, `host`, and `port`
-for CryoSPARC server access. These settings are necessary to enable access to your CryoSPARC account.
 
 [//]: # (## Quickstart)
 ## Cryo-IEF
@@ -69,8 +53,25 @@ After inference, this cache can be deleted while retaining the other output file
 ## CryoWizard ![Beta Badge](https://img.shields.io/badge/status-beta-yellow)
 ⚠️ CryoWizard is in beta. Expect updates and potential changes to features. Please report any issues encountered.
 
+### 1. CryoWizard Installation
+The CryoWizard pipeline utilizes APIs provided by CryoSPARC. Please ensure that you have installed [CryoSPARC](https://cryosparc.com/). Note that the version of `cryosparc-tools` specified in `requirements.txt` must correspond to your CryoSPARC installation.  
 
-### 1. Using CryoWizard via Web Interface
+By default, CryoWizard submits model inference tasks via  [Slurm](https://slurm.schedmd.com/). We recommend that users install Slurm prior to using CryoWizard. If Slurm is not installed, set `if_slurm` to false in `parameters.json`.
+
+After installing the environment, some necessary settings must be configured. 
+
+1. In `path/to/Cryo-IEF/code/CryoRanker/classification_inference_settings.yml`, set the path to the downloaded model weights:
+
+
+
+        path_model_proj: path/to/downloaded/CryoRanker/model/weight/
+
+
+
+2. Open `path/to/Cryo-IEF/code/MyLib/cs_login_info.json` and configure parameters such as `license`, `host`, and `port`
+for CryoSPARC server access. These settings are necessary to enable access to your CryoSPARC account.
+
+### 2. Using CryoWizard via Web Interface
 
 To launch the web application:
 
@@ -114,7 +115,7 @@ To initiate the pipeline, click `Run`. Progress details will appear in the gray 
 
 Once the pipeline completes, click the `Download Map` to download the `map_sharp` from the most recent best nu-refine job.
 
-### 2. Using the Pipeline via Command Line
+### 3. Using the Pipeline via Command Line
 
 Create a pipeline project folder and parameter files:
 
@@ -158,7 +159,7 @@ Additionally, we provide a command to obtain the top `N` particles sorted by sco
 
 This command will create an external job containing the output with the top `N` particles.
 
-### 3. Parameters.json
+### 4. Parameters.json
 
 The `parameters.json` ffile contains all adjustable pipeline parameters. You may customize these to suit your project needs.
 The following is an example of the `parameters.json` file:
@@ -226,11 +227,11 @@ The following is an example of the `parameters.json` file:
 * The `hostname_gpus_jobnum_lists` lists the maximum number of jobs that can run on each GPU.
 * The parameters pertaining to refinement specify various thresholds and iterations related to the processing pipeline.
 
-## Test case
+### 5. Test case
 In this test case, we demonstrate how to use CryoWizard with the beta-galactosidase dataset, a small, widely-used dataset often featured in Relion tutorials. 
 The movie data for this dataset can be downloaded from the [relion tutorial](https://relion.readthedocs.io/en/release-5.0/SPA_tutorial/Introduction.html/) or from our [google drive](https://drive.google.com/drive/folders/1OZc8pRgy31Qk646Xfe1jLh-URWroMI6Z?usp=sharing).
 
-### STEP 1: Prepare the parameters
+#### STEP 1: Prepare the parameters
 
 ![create root path](./readme_figure/test_case_step1.png)
 
@@ -279,7 +280,7 @@ As shown in the figure below.
 
 ![create root path](./readme_figure/test_case_step4.png)
 
-### STEP 2: Run CryoWizard
+#### STEP 2: Run CryoWizard
 
 ![create root path](./readme_figure/test_case_step5.png)
 
