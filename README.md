@@ -46,7 +46,7 @@ CryoRanker processes only cryoSPARC job types that output particles, such as `Ex
 
 The predicted scores are saved in `dir/to/save/results/scores_predicted_list.csv`.
 The order of scores aligns with the particle order in the`.cs` file located in `dir_to_cryoSPARC_job`.
-If `--num_select` is set to `N`, the top `N` particles will be selected and saved in `dir/to/save/results/selected_particles_top_N.cs` and `dir/to/save/results/selected_particles_top_N.star`. You load these selected particles in cryoSPARC or RELION for further processing.
+If `--num_select` is set to `N`, the top `N` particles will be selected and saved in `dir/to/save/results/selected_particles_top_N.cs` and `.../selected_particles_top_N.star`. You can load these selected particles in cryoSPARC or RELION for further processing.
 
 During CryoRanker inference, raw data is preprocessed and cached in `dir/to/save/results/processed_data`.
 After inference, this cache can be deleted while retaining the other output files.
