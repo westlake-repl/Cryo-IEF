@@ -1,9 +1,9 @@
 # Output path
-path_result_dir: /yanyang2/results/cryo_clustering/debug/25_2_26_t2
+path_result_dir: null
 path_model_proj: null
 features_path: null
 #raw_data_path: null
-raw_data_path: /yuanfajie/cryosparc_projects/CS-testproject-fsq/J581/
+raw_data_path: null
 processed_data_path: null
 pixelsize: null
 particle_csfile_path: null
@@ -18,10 +18,6 @@ batch_size: 512
 k: 4
 cut_ratio: 0.0
 
-confidence_cut:
-    is_confidence_cut: true
-    ratio: [0.02,0.4]
-    step_num: 10
 
 model:
    model_name: moco_v3

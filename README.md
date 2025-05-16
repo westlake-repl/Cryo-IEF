@@ -41,11 +41,12 @@ CryoRanker integrates Cryo-IEF’s backbone encoder with an additional classific
 fine-tuned on a labeled dataset to rank particle images by quality.
 
     (base) $ conda activate cryo_ief
-    (cryo_ief) $ accelerate launch path/to/Cryo-IEF/code/CryoRanker_inference.py --path_result_dir dir/to/save/results --path_model_proj dir/to/CryoRanker_model_weight --raw_data_path dir/to/cryoSPARC_job
+    (cryo_ief) $ accelerate launch path/to/Cryo-IEF/code/CryoRanker_inference.py --path_result_dir dir/to/save/results --path_model_proj dir/to/CryoRanker_model_weight --raw_data_path dir/to/cryoSPARC_job --num_select N
 CryoRanker processes only cryoSPARC job types that output particles, such as `Extracted Particles`, `Restack Particles`, and `Particles Sets`. 
 
 The predicted scores are saved in `dir/to/save/results/scores_predicted_list.csv`.
 The order of scores aligns with the particle order in the`.cs` file located in `dir_to_cryoSPARC_job`.
+If `--num_select` is set to `N`, the top `N` particles will be selected and saved in `dir/to/save/results/selected_particles_top_N.cs` and `dir/to/save/results/selected_particles_top_N.star`. You load these selected particles in cryoSPARC or RELION for further processing.
 
 During CryoRanker inference, raw data is preprocessed and cached in `dir/to/save/results/processed_data`.
 After inference, this cache can be deleted while retaining the other output files.

@@ -18,10 +18,8 @@ batch_size: 512
 k: 8
 cut_ratio: 0.0
 
-confidence_cut:
-    is_confidence_cut: true
-    ratio: [0.02,0.4]
-    step_num: 10
+num_select: 0
+
 
 model:
    model_name: moco_v3
@@ -34,6 +32,7 @@ model:
    patch_size: 14
 #   classifier: '2linear'
    classifier: '1linear'
+#   classifier: 'new'
 
 
 

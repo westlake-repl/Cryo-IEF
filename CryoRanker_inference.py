@@ -19,7 +19,7 @@ import Cryo_IEF.vits as vits
 from Cryo_IEF.vits import  Classifier,Classifier_2linear,Classifier_new
 import sys
 from tqdm import tqdm
-from CryoRanker.edl_loss import edl_digamma_loss, one_hot_embedding, relu_evidence
+# from CryoRanker.edl_loss import edl_digamma_loss, one_hot_embedding, relu_evidence
 import numpy as np
 from safetensors.torch import load_file
 import pandas as pd
@@ -30,32 +30,11 @@ import pickle
 from collections import defaultdict
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.preprocessing import StandardScaler
+from Cryoemdata.cs_star_translate.cs2star import cs2star
+
 # from thop import profile
 t_import = time.time() - t_import_start
-print('import time:{}'.format(t_import))
-
-def sampling_iter(labels_iter,centers_iter,num_class,sample_k,job=None):
-    n = centers_iter.shape[0]
-    new_num_classes=[]
-    dis_list=[]
-
-    if sample_k >= n:
-        return np.arange(n)
-
-    distances = euclidean_distances(centers_iter)
-
-    selected_indices = [np.random.randint(n)]
-
-    for _ in range(1, sample_k):
-
-        min_distances = np.min(distances[selected_indices][:, np.setdiff1d(range(n), selected_indices)], axis=0)
-        max_min_distance = np.max(min_distances)
-        next_index = np.setdiff1d(range(n), selected_indices)[np.argmax(min_distances)]
-        selected_indices.append(next_index)
-        new_num_classes.append(num_class[next_index])
-        dis_list.append(max_min_distance)
-    print('distance list:'+str(dis_list))
-    return selected_indices
+# print('import time:{}'.format(t_import))
 
 
 def inference_processed_data(model, valid_loader, accelerator, is_calculate_acc=False, use_bnn_head=False,
@@ -83,7 +62,7 @@ def inference_processed_data(model, valid_loader, accelerator, is_calculate_acc=
     features_all = []
     uncertainty_all = []
     scores_predicted_all = []
-    scores_all = []
+    # scores_all = []
     # sorted_resampled_features=[]
     model.eval()
     with torch.no_grad():
@@ -93,33 +72,28 @@ def inference_processed_data(model, valid_loader, accelerator, is_calculate_acc=
             y_t = accelerator.gather_for_metrics(data['label_for_classification'])
             y_t_all.extend(y_t.cpu().tolist())
             # Forward pass and record loss
-            features ,y_p=model(x)
+            features, y_p = model(x)
             # y_p = model.forward_head(features)
             y_p = accelerator.gather_for_metrics(y_p)
 
             features = accelerator.gather_for_metrics(features)
 
-            if use_edl_loss:
-                evidence = relu_evidence(y_p)
-                alpha = evidence + 1
-                uncertainty = 2 / torch.sum(alpha, dim=1, keepdim=True)
-                uncertainty_all.extend(torch.squeeze(uncertainty).cpu().tolist())
-            else:
-                y_p_softmax = F.softmax(y_p, dim=-1)
+            y_p_softmax = F.softmax(y_p, dim=-1)
 
-                numerator_pos = y_p_softmax[:, 1]
-                # denominator = y_p_softmax[:, 0] + y_p_softmax[:, 1]
-                denominator = torch.sum(y_p_softmax, dim=1)
-                scores_predicted = torch.div(numerator_pos, denominator).cpu().tolist()
-                scores_predicted_all.extend(scores_predicted)
-                numerator = torch.max(y_p_softmax, dim=1).values
-                scores = torch.div(numerator, denominator)
-                scores_all.extend(scores.cpu().tolist())
+            numerator_pos = y_p_softmax[:, 1]
+            # denominator = y_p_softmax[:, 0] + y_p_softmax[:, 1]
+            denominator = torch.sum(y_p_softmax, dim=1)
+            scores_predicted = torch.div(numerator_pos, denominator).cpu().tolist()
+            scores_predicted_all.extend(scores_predicted)
+            # numerator = torch.max(y_p_softmax, dim=1).values
+            # scores = torch.div(numerator, denominator)
+            # scores_all.extend(scores.cpu().tolist())
             if use_features:
                 items = accelerator.gather_for_metrics(data['item']).cpu().numpy()
                 features_np = F.normalize(features, p=2, dim=1).cpu().numpy().astype(np.float16)
-                scores_tuple_list=[(items[i],scores_predicted[i],features_np[i]) for i in range(len(scores_predicted))]
-                features_all=merge_and_sort_lists(features_all,scores_tuple_list,features_max_num)
+                scores_tuple_list = [(items[i], scores_predicted[i], features_np[i]) for i in
+                                     range(len(scores_predicted))]
+                features_all = merge_and_sort_lists(features_all, scores_tuple_list, features_max_num)
 
                 # features_all.extend(features_np)
 
@@ -143,9 +117,9 @@ def inference_processed_data(model, valid_loader, accelerator, is_calculate_acc=
                 # precision_correct_num += sum((y_t == 1) & (out_digit == 1)).cpu().item()
                 # precision_num_all += sum(out_digit == 1).cpu().item()
 
-    new_features_all={}
+    new_features_all = {}
     for id_scores_feature in features_all:
-        new_features_all[id_scores_feature[0]]=id_scores_feature[2]
+        new_features_all[id_scores_feature[0]] = id_scores_feature[2]
 
     if recall_num_all > 0:
         recall = recall_correct_num / recall_num_all
@@ -157,7 +131,10 @@ def inference_processed_data(model, valid_loader, accelerator, is_calculate_acc=
     else:
         precision = 0
 
-    return {'loss': total_loss / total_num, 'aug_img': x, 'img': data['mrcdata'], 'class_t': y_t_all,
+    return {'loss': total_loss / total_num,
+            # 'aug_img': x,
+            # 'img': data['mrcdata'],
+            'class_t': y_t_all,
             'acc': acc_correct_num / acc_num_all, 'recall': recall, 'precision': precision, 'class_p': class_p_all,
             'acc_with_threshold': acc_with_threshold,
             'recall_with_threshold': recall_with_threshold, 'precision_with_threshold': precision_with_threshold,
@@ -165,8 +142,10 @@ def inference_processed_data(model, valid_loader, accelerator, is_calculate_acc=
             'mean_uncertainty_positive': mean_uncertainty_positive,
             'mean_uncertainty_negative': mean_uncertainty_negative,
             'positive ratio': sum(np.array(class_p_all) == 1) / len(y_t_all),
-            'negative ratio': sum(np.array(class_p_all) == 0) / len(y_t_all), 'uncertainty_list': uncertainty_all,
-            'scores_predicted_list': scores_predicted_all, 'scores_all_list': scores_all,'features_all':new_features_all}
+            'negative ratio': sum(np.array(class_p_all) == 0) / len(y_t_all),
+            'scores_predicted_list': scores_predicted_all,
+            # 'scores_all_list': scores_all,
+            'features_all': new_features_all}
 
 
 def merge_and_sort_lists(list1, list2, max_num):
@@ -179,7 +158,8 @@ def merge_and_sort_lists(list1, list2, max_num):
     # 如果排序后的列表长度小于max_num，返回全部；否则返回前max_num个元素
     return sorted_list[:max_num]
 
-def model_inference(cfg, accelerator,use_features=False,features_max_num=50000):
+
+def model_inference(cfg, accelerator, use_features=False, features_max_num=50000):
     '''model'''
     # model = vits.__dict__["vit_small"](num_classes=cfg['model']['num_classes'], dynamic_img_size=True)
     # model.patch_embed.proj = nn.Conv2d(1, 384, kernel_size=(16, 16), stride=(16, 16))
@@ -190,11 +170,11 @@ def model_inference(cfg, accelerator,use_features=False,features_max_num=50000):
 
     in_channels = model.head.in_features
 
-    if cfg['model']['classifier']=='new':
+    if cfg['model']['classifier'] == 'new':
         model.norm = torch.nn.Identity()
-        model.head=Classifier_new(input_dim=in_channels, output_dim=cfg['model']['num_classes'])
-    elif cfg['model']['classifier']=='2linear':
-        model.head=Classifier_2linear(input_dim=in_channels, output_dim=cfg['model']['num_classes'])
+        model.head = Classifier_new(input_dim=in_channels, output_dim=cfg['model']['num_classes'])
+    elif cfg['model']['classifier'] == '2linear':
+        model.head = Classifier_2linear(input_dim=in_channels, output_dim=cfg['model']['num_classes'])
     else:
         model.head = Classifier(input_dim=in_channels, output_dim=cfg['model']['num_classes'])
 
@@ -210,14 +190,14 @@ def model_inference(cfg, accelerator,use_features=False,features_max_num=50000):
     transforms_list_val = get_transformers.get_val_transformations(cfg['augmentation_kwargs'],
                                                                    mean_std=(0.53786290141223, 0.11803331075935841))
 
-
     mrcdata_val = MyMrcData(mrc_path=cfg['raw_data_path'], emfile_path=None, tmp_data_save_path=cfg['path_result_dir'],
                             processed_data_path=cfg['processed_data_path'],
                             selected_emfile_path=None, cfg=cfg['preprocess_kwargs'], is_extra_valset=True,
                             accelerator=accelerator)
 
     valset = EMDataset_from_path(mrcdata=mrcdata_val,
-                                 is_Normalize=cfg['augmentation_kwargs']['is_Normalize'], )
+                                 # is_Normalize=cfg['augmentation_kwargs']['is_Normalize'],
+                                 )
     valset.get_transforms(transforms_list_val)
     valset.local_crops_number = 0
 
@@ -241,7 +221,8 @@ def model_inference(cfg, accelerator,use_features=False,features_max_num=50000):
     '''reference'''
     results = inference_processed_data(model, val_dataloader, accelerator, is_calculate_acc=cfg['is_calculate_acc'],
                                        use_edl_loss=cfg['model']['use_edl_loss'],
-                                       use_bnn_head=cfg['model']['use_bnn_head'],use_features=use_features,features_max_num=features_max_num)
+                                       use_bnn_head=cfg['model']['use_bnn_head'], use_features=use_features,
+                                       features_max_num=features_max_num)
 
     if cfg['is_calculate_acc']:
         accelerator.print('valset acc:{}'.format(results['acc']))
@@ -255,33 +236,28 @@ def model_inference(cfg, accelerator,use_features=False,features_max_num=50000):
         from Other_tools.select_particles import divide_selected_particles_id, get_particles_from_cs
         from Cryoemdata.cs_star_translate.cs2star import cs2star
 
-        labels_predicted_pd = pd.DataFrame(data=results['class_p'], columns=['labels_predicted'])
-        labels_predicted_pd.to_csv(os.path.join(cfg['path_result_dir'], 'labels_predicted.csv'), index=False)
+        # labels_predicted_pd = pd.DataFrame(data=results['class_p'], columns=['labels_predicted'])
+        # labels_predicted_pd.to_csv(os.path.join(cfg['path_result_dir'], 'labels_predicted.csv'), index=False)
 
-        uncertainty_list_pd = pd.DataFrame(data=results['uncertainty_list'], columns=['uncertainty_list'])
-        uncertainty_list_pd.to_csv(os.path.join(cfg['path_result_dir'], 'uncertainty_list.csv'), index=False)
 
         scores_list_pd = pd.DataFrame(data=results['scores_predicted_list'], columns=['scores_predicted_list'])
         scores_list_pd.to_csv(os.path.join(cfg['path_result_dir'], 'scores_predicted_list.csv'), index=False)
 
-        scores_list_pd = pd.DataFrame(data=results['scores_all_list'], columns=['scores_all_list'])
-        scores_list_pd.to_csv(os.path.join(cfg['path_result_dir'], 'scores_all_list.csv'), index=False)
-
+        # scores_list_pd = pd.DataFrame(data=results['scores_all_list'], columns=['scores_all_list'])
+        # scores_list_pd.to_csv(os.path.join(cfg['path_result_dir'], 'scores_all_list.csv'), index=False)
 
         with open(os.path.join(cfg['path_result_dir'], 'features_all.data'), 'wb') as filehandle:
             pickle.dump(results['features_all'], filehandle)
 
-        if cfg['is_calculate_acc']:
-            labels_true_pd = pd.DataFrame(data=results['class_t'], columns=['labels_true'])
-            labels_true_pd.to_csv(os.path.join(cfg['path_result_dir'], 'labels_true.csv'), index=False)
+        # if cfg['is_calculate_acc']:
+        #     labels_true_pd = pd.DataFrame(data=results['class_t'], columns=['labels_true'])
+        #     labels_true_pd.to_csv(os.path.join(cfg['path_result_dir'], 'labels_true.csv'), index=False)
+
+    return results['scores_predicted_list'], results['features_all']
 
 
-    return results['scores_predicted_list'],results['features_all']
-
-
-
-
-def cryo_select_main(cfg=None,job_path=None,cache_file_path=None,accelerator=None,use_features=False,features_max_num=1000000):
+def cryo_select_main(cfg=None, job_path=None, cache_file_path=None, accelerator=None, use_features=False,
+                     features_max_num=1000000):
     '''distribution'''
     if accelerator is None:
         accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=96000))])
@@ -293,19 +269,17 @@ def cryo_select_main(cfg=None,job_path=None,cache_file_path=None,accelerator=Non
         cfg = EasyDict()
 
         with open(
-                 os.path.dirname(os.path.abspath(__file__))+'/CryoRanker/cryoranker_inference_settings.yml',
+                os.path.dirname(os.path.abspath(__file__)) + '/CryoRanker/cryoranker_inference_settings.yml',
                 'r') as stream:
             config = yaml.safe_load(stream)
-
 
         for k, v in config.items():
             cfg[k] = v
 
         if job_path is not None:
-            cfg['raw_data_path']=job_path
+            cfg['raw_data_path'] = job_path
         if cache_file_path is not None:
-            cfg['path_result_dir']=cache_file_path
-
+            cfg['path_result_dir'] = cache_file_path
 
     if accelerator.is_local_main_process:
         if not os.path.exists(cfg['path_result_dir']):
@@ -322,22 +296,24 @@ def cryo_select_main(cfg=None,job_path=None,cache_file_path=None,accelerator=Non
     accelerator.print('Time of run: ' + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()))
 
     '''inference'''
-    features_all=[]
-    if not (os.path.exists(cfg['path_result_dir'] + '/labels_predicted.csv') and os.path.exists(
-            cfg['path_result_dir'] + '/uncertainty_list.csv')):
+    features_all = []
+    if not os.path.exists(cfg['path_result_dir'] + '/scores_predicted_list.csv') :
         processed_data_path = os.path.join(cfg['path_result_dir'], 'processed_data')
         new_cs_data_path = processed_data_path + '/new_particles.cs'
 
-        if cfg['processed_data_path'] is not None or (os.path.exists(new_cs_data_path) and os.path.exists(processed_data_path + '/output_tif_path.data')):
+        if cfg['processed_data_path'] is not None or (
+                os.path.exists(new_cs_data_path) and os.path.exists(processed_data_path + '/output_tif_path.data')):
             # processed_data_path = cfg['processed_data_path']
-            new_cs_data = Dataset.load(new_cs_data_path)
+            if os.path.exists(new_cs_data_path):
+                new_cs_data = Dataset.load(new_cs_data_path)
+            else:
+                new_cs_data = None
             if cfg['processed_data_path'] is None:
                 cfg['processed_data_path'] = processed_data_path
 
         elif cfg['raw_data_path'] is not None:
 
             if accelerator.is_local_main_process:
-
                 time_data_process_start = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
                 accelerator.print('Time of data process start: ' + time_data_process_start)
                 _ = raw_data_preprocess(cfg['raw_data_path'], processed_data_path,
@@ -356,35 +332,60 @@ def cryo_select_main(cfg=None,job_path=None,cache_file_path=None,accelerator=Non
         else:
             print('We need processed_data_path or raw_data_path to generate the dataset!')
             sys.exit(0)
-        accelerator.print('Time of start inference: '+time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) )
-        scores,features_all=model_inference(cfg, accelerator,use_features=use_features,features_max_num=features_max_num)
-        accelerator.print('Time of finish inference: '+time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) )
+        accelerator.print('Time of start inference: ' + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()))
+        scores, features_all = model_inference(cfg, accelerator, use_features=use_features,
+                                               features_max_num=features_max_num)
+        accelerator.print('Time of finish inference: ' + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()))
     else:
         accelerator.print('labels_predicted.csv and uncertainty_list.csv already exist!')
 
-        new_cs_data = Dataset.load(cfg['path_result_dir'] +'/processed_data/new_particles.cs')
-        scores= pd.read_csv(cfg['path_result_dir'] + '/scores_predicted_list.csv')[
-                'scores_predicted_list'].values
+        new_cs_data = Dataset.load(cfg['path_result_dir'] + '/processed_data/new_particles.cs')
+        scores = pd.read_csv(cfg['path_result_dir'] + '/scores_predicted_list.csv')[
+            'scores_predicted_list'].values
 
         if os.path.exists(cfg['path_result_dir'] + '/features_all.data') and use_features:
             with open(cfg['path_result_dir'] + '/features_all.data',
                       'rb') as filehandle:
                 features_all = pickle.load(filehandle)
 
+    accelerator.print('Mean score:' + str(np.mean(scores)))
 
-    return new_cs_data,scores,features_all
+    return new_cs_data, scores, features_all
+
+def select_particles_by_score(new_cs_data, scores, num_select,save_path):
+    '''select particles by score, generate a new cs/star file'''
+    scores = np.array(scores)
+    sorted_indices_list = np.argsort(-scores).tolist()
+    if num_select > len(sorted_indices_list):
+        num_select = len(sorted_indices_list)
+    selected_indices = sorted_indices_list[:num_select]
+    cs_data_selected = new_cs_data.take(selected_indices)
+    cs_save_path = os.path.join(save_path, 'selected_particles_top_{}.cs'.format(num_select))
+    cs_data_selected.save(cs_save_path)
+    cs2star(cs_save_path, cs_save_path.replace('.cs', '.star'))
 
 
 if __name__ == '__main__':
     '''get config'''
     parser = ArgumentParser()
 
-    parser.add_argument('--path_result_dir', default=None, type=str)
-    parser.add_argument('--raw_data_path', default=None, type=str)
-    parser.add_argument('--path_model_proj', default=None, type=str)
+    parser.add_argument('--path_result_dir', default='/yanyang2/results/cryo_ranker/debug/25_5_16', type=str)
+    parser.add_argument('--raw_data_path',
+                        default=None,
+                        type=str)
+    # parser.add_argument('--path_model_proj', default='/yanyang2/projects/results/particle_classification/finetune_newmodel_newdata_p05_womix_full_add_rank_200e_smooth_002/2025_0107_190200_full_all_2048_0.5_/checkpoint/checkpoint_epoch_45', type=str)
+    parser.add_argument('--path_model_proj',
+                        default=None,
+                        type=str)
+
+    # parser.add_argument('--path_result_dir', default=None, type=str)
+    # parser.add_argument('--raw_data_path', default=None, type=str)
+    # parser.add_argument('--path_model_proj', default=None, type=str)
     parser.add_argument('--path_proj_dir', default=None, type=str)
     parser.add_argument('--batch_size', default=None, type=int)
     parser.add_argument('--model_name', default=None, type=str)
+    # parser.add_argument('--num_select', default=None, type=float)
+    parser.add_argument('--num_select', default=None, type=int)
 
 
     args = parser.parse_args()
@@ -398,8 +399,6 @@ if __name__ == '__main__':
             'r') as stream:
         config = yaml.safe_load(stream)
     # else:
-
-
 
     for k, v in config.items():
         cfg[k] = v
@@ -419,9 +418,17 @@ if __name__ == '__main__':
     if args.batch_size is not None:
         cfg['batch_size'] = args.batch_size
 
-    new_cs_data,scores,features_all=cryo_select_main(cfg=cfg,job_path=cfg['raw_data_path'],cache_file_path=cfg['path_result_dir'],use_features=True)
+    if args.num_select is not None:
+        cfg['num_select'] = args.num_select
 
+    accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=96000))])
 
+    new_cs_data, scores, features_all = cryo_select_main(cfg=cfg, job_path=cfg['raw_data_path'],
+                                                         cache_file_path=cfg['path_result_dir'], use_features=True,accelerator=accelerator)
 
-
-
+    if accelerator.is_local_main_process:
+        if cfg['num_select'] is not None and cfg['num_select'] > 0:
+            accelerator.print('Selecting particles by score...')
+            selected_particles = select_particles_by_score(new_cs_data=new_cs_data, scores=scores,num_select= cfg['num_select'], save_path= cfg['path_result_dir'])
+            accelerator.print('Selected particles saved to {}'.format(cfg['path_result_dir'] + '/selected_particles_top_{}.cs'.format(cfg['num_select'])))
+    accelerator.wait_for_everyone()
