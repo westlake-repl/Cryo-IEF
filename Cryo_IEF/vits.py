@@ -116,6 +116,62 @@ class VisionTransformerMoCo(VisionTransformer):
 #         x_ = F.relu(x_)
 #         x_=self.blinear2(x_)
 #         return x_
+class Classifier_new(nn.Module):
+    def __init__(self, input_dim, output_dim,num_linear_layers=1,mlp_dim=1024,add_vit_blocks_num=0):
+        super().__init__()
+        self.add_vit_blocks_num=add_vit_blocks_num
+        if add_vit_blocks_num>0:
+
+            self.vit_blocks=nn.Sequential(*[
+            Block(
+                dim=input_dim,
+                num_heads=12,
+                mlp_ratio=4,
+                qkv_bias=True,
+                qk_norm=False,
+                init_values=None,
+                proj_drop=0.0,
+                attn_drop=0.0,
+                drop_path=0.0,
+                norm_layer=partial(nn.LayerNorm, eps=1e-6),
+                # act_layer=nn.GELU,
+                # mlp_layer=Mlp,
+            )
+            for i in range(add_vit_blocks_num)])
+
+        mlp = []
+        for l in range(num_linear_layers):
+            if l==0:
+                dim1=input_dim
+            else:
+                dim1 =  mlp_dim
+                mlp_dim=mlp_dim//2
+            dim2 = output_dim if l == num_linear_layers - 1 else mlp_dim
+
+            # mlp.append(nn.Linear(dim1, dim2, bias=False))
+            mlp.append(nn.Linear(dim1, dim2))
+
+            if l < num_linear_layers - 1:
+                mlp.append(nn.SyncBatchNorm(dim2))
+                mlp.append(nn.ReLU(inplace=True))
+        self.mlp_classifier= nn.Sequential(*mlp)
+        self.norm=nn.LayerNorm(input_dim, eps=1e-6)
+
+    def forward(self, x):
+        if self.add_vit_blocks_num >0:
+            x_=self.vit_blocks(x)
+        else:
+            x_=x
+        x_=self.norm(x_)
+        # x_ = x_[:, 0]
+        x_ = self.mlp_classifier(x_)
+        # x_=self.bn1(x_)
+        # x_ = F.relu(x_)
+        # x_=self.linear2(x_)
+        # x_=self.bn2(x_)
+        # x_ = F.relu(x_)
+        # x_=self.linear3(x_)
+        return x_
 
 class Classifier(nn.Module):
     def __init__(self, input_dim, output_dim):

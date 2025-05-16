@@ -509,6 +509,8 @@ def combine_cs_files_column(cs_path1, cs_path2):
 def raw_csdata_process_from_cryosparc_dir(raw_data_path):
     passthrough_particles_path = None
     particles_cs_path = None
+    cs_data=None
+    mrc_list=[]
     for filename in os.listdir(raw_data_path):
         if filename.endswith('passthrough_particles.cs'):
 
@@ -535,6 +537,10 @@ def raw_csdata_process_from_cryosparc_dir(raw_data_path):
 
             particles_cs_path = os.path.join(raw_data_path, filename)
 
+        if filename.endswith('.mrc') or filename.endswith('.mrcs'):
+
+            mrc_list.append(filename)
+
     if passthrough_particles_path is not None:
         cs_data = combine_cs_files_column(particles_cs_path, passthrough_particles_path)
     elif particles_cs_path is not None:
@@ -548,91 +554,71 @@ def raw_csdata_process_from_cryosparc_dir(raw_data_path):
         mrc_dir = os.path.join(raw_data_path, 'extract')
     elif os.path.exists(os.path.join(raw_data_path, 'imported')):
         mrc_dir = os.path.join(raw_data_path, 'imported')
-    elif particles_cs_path.endswith('split_0000.cs'):
+    elif particles_cs_path is not None and particles_cs_path.endswith('split_0000.cs'):
         raw_dir='/'.join(raw_data_path.split('/')[0:-2])
         mrc_dir = raw_dir+'/'+'/'.join(cs_data['blob/path'][0].split('/')[0:-1])+'/'
-    return cs_data,mrc_dir
+    if len(mrc_list)>0 and cs_data is None:
+        mrc_dir = raw_data_path
+    return cs_data,mrc_dir,mrc_list
     # if not os.path.exists(processed_data_save_path):
     #     os.makedirs(processed_data_save_path)
     # new_cs_data_path=raw_data_preprocess(raw_data_path, processed_data_save_path,cs_data=cs_data)
     # print('new cs data saved in {}'.format(new_cs_data_path))
 def raw_data_preprocess(raw_dataset_dir, dataset_save_dir,  resize=224, is_to_int8=True,save_raw_data=False):
 
-    # if os.path.exists(os.path.join(raw_dataset_dir, 'restack')):
-    #     mrc_dir = os.path.join(raw_dataset_dir, 'restack')
-    # elif os.path.exists(os.path.join(raw_dataset_dir, 'extract')):
-    #     mrc_dir = os.path.join(raw_dataset_dir, 'extract')
-    # elif os.path.exists(os.path.join(raw_dataset_dir, 'imported')):
-    #     mrc_dir = os.path.join(raw_dataset_dir, 'imported')
-    # elif
-
-
-    cs_data,mrc_dir=raw_csdata_process_from_cryosparc_dir(raw_dataset_dir)
-    blob_path_list=cs_data['blob/path'].tolist()
-    mrcs_names_list = [blob_path_list[i].split('/')[-1] for i in
-                       range(len(blob_path_list))]
-
-    mrcs_names_list_process = list(dict.fromkeys(mrcs_names_list))
-
-    #Optimization speeds up this code
-    # if cs_data is not None:
-    print("Processing cs_data...")
-    mrcs_names_np = np.array(mrcs_names_list)
-    # aaa=np.where((mrcs_names_np == 'batch_17790_restacked.mrc'))[0]
-    # sub_cs=cs_data.take(aaa)
-    # mrcs_names_list_sub = sub_cs['blob/path'].tolist()
-    # blob_idx_sub = sub_cs['blob/idx'].tolist()
-    # Create a dictionary where the keys are names and the values are lists of indices
-    blob_idx_np=_np = np.array(cs_data['blob/idx'].tolist())
-    sorted_indices = np.argsort(mrcs_names_np)
-    sorted_names = mrcs_names_np[sorted_indices]
-    unique_names, counts = np.unique(sorted_names, return_counts=True)
-    split_indices = np.split(sorted_indices, np.cumsum(counts)[:-1])
-    indices_dict = dict(zip(unique_names, split_indices))
-    indeices_per_mrcs_dict={}
-
-    for name, indices in indices_dict.items():
-        # Convert indices to numpy array
-        indices_np = np.array(indices)
-
-        # Get corresponding values in blob_idx_np
-        values = blob_idx_np[indices_np]
-
-        # Get the sorted indices based on the values
-        sorted_indices = np.argsort(values)
-
-        # Update indices in indices_dict in-place
-        indices_dict[name] = indices_np[sorted_indices]
-        indeices_per_mrcs_dict[name]=np.sort(values)
-
-    # indices_dict = {name: np.where(mrcs_names_np == name)[0] for name in mrcs_names_list_process}
-    # Use the dictionary to perform the operations
-    # new_cs_data = cs_data.take(indices_dict[mrcs_names_list_process[0]])
-    # for i, name in enumerate(mrcs_names_list_process[1:]):
-    #     new_cs_data = Dataset.append(new_cs_data, cs_data.take(indices_dict[name]))
-    func_append_data=partial(append_data,cs_data=cs_data,indices_dict=indices_dict)
-    with multiprocessing.Pool(processes=8) as pool:
-        results = pool.map(func_append_data, mrcs_names_list_process)
-    new_cs_data = Dataset.append(results[0], *results[1:])
-
-    # new_blob_path_list = new_cs_data['blob/path'].tolist()
-    # new_mrcs_names_list = [new_blob_path_list[i].split('/')[-1] for i in
-    #                    range(len(new_blob_path_list))]
-    # new_mrcs_names_np=np.array(new_mrcs_names_list)
-    # aaa=np.where((new_mrcs_names_np == 'batch_17790_restacked.mrc'))[0]
-    # sub_cs=new_cs_data.take(aaa)
-    # mrcs_names_list_sub = sub_cs['blob/path'].tolist()
-    # blob_idx_sub = sub_cs['blob/idx'].tolist()
-
-
-    # new_mrcs_names_list = new_cs_data['blob/path'].tolist()
-    # new_blob_idx=new_cs_data['blob/idx'].tolist()
-    # blob_idx=cs_data['blob/idx'].tolist()
-
     if not os.path.exists(dataset_save_dir):
         os.makedirs(dataset_save_dir)
-    new_csdata_path = os.path.join(dataset_save_dir, 'new_particles.cs')
-    new_cs_data.save(new_csdata_path)
+
+    cs_data,mrc_dir,mrc_list=raw_csdata_process_from_cryosparc_dir(raw_dataset_dir)
+    if cs_data is not None:
+        blob_path_list=cs_data['blob/path'].tolist()
+        mrcs_names_list = [blob_path_list[i].split('/')[-1] for i in
+                           range(len(blob_path_list))]
+
+
+        mrcs_names_list_process = list(dict.fromkeys(mrcs_names_list))
+
+        print("Processing cs_data...")
+        mrcs_names_np = np.array(mrcs_names_list)
+        # Create a dictionary where the keys are names and the values are lists of indices
+        blob_idx_np=_np = np.array(cs_data['blob/idx'].tolist())
+        sorted_indices = np.argsort(mrcs_names_np)
+        sorted_names = mrcs_names_np[sorted_indices]
+        unique_names, counts = np.unique(sorted_names, return_counts=True)
+        split_indices = np.split(sorted_indices, np.cumsum(counts)[:-1])
+        indices_dict = dict(zip(unique_names, split_indices))
+        indeices_per_mrcs_dict={}
+
+        for name, indices in indices_dict.items():
+            # Convert indices to numpy array
+            indices_np = np.array(indices)
+
+            # Get corresponding values in blob_idx_np
+            values = blob_idx_np[indices_np]
+
+            # Get the sorted indices based on the values
+            sorted_indices = np.argsort(values)
+
+            # Update indices in indices_dict in-place
+            indices_dict[name] = indices_np[sorted_indices]
+            indeices_per_mrcs_dict[name]=np.sort(values)
+
+
+        func_append_data=partial(append_data,cs_data=cs_data,indices_dict=indices_dict)
+        with multiprocessing.Pool(processes=8) as pool:
+            results = pool.map(func_append_data, mrcs_names_list_process)
+        new_cs_data = Dataset.append(results[0], *results[1:])
+
+
+
+
+        new_csdata_path = os.path.join(dataset_save_dir, 'new_particles.cs')
+        new_cs_data.save(new_csdata_path)
+    else:
+        indeices_per_mrcs_dict=None
+        mrcs_names_list_process=mrc_list
+        new_cs_data=None
+
     particles_dir_name = raw_dataset_dir.split('/')[-1]
 
     if save_raw_data:
