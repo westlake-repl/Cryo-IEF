@@ -129,10 +129,10 @@ After executing these commands, a `parameter` folder will be created, and parame
 To create import job folders, consider the following example: if your raw data for a single target protein is separated, you may need to create two import movie jobs, one import micrograph job, and one import particle stack job to import all this raw data:
 
     ...
-    (cryo_ief) $ python path/to/Cryo-IEF/code/CreateParameterFiles.py movie
-    (cryo_ief) $ python path/to/Cryo-IEF/code/CreateParameterFiles.py movie
-    (cryo_ief) $ python path/to/Cryo-IEF/code/CreateParameterFiles.py micrograph
-    (cryo_ief) $ python path/to/Cryo-IEF/code/CreateParameterFiles.py particle
+    (cryo_ief) $ python path/to/Cryo-IEF/code/CreateImportParameterFiles.py movie
+    (cryo_ief) $ python path/to/Cryo-IEF/code/CreateImportParameterFiles.py movie
+    (cryo_ief) $ python path/to/Cryo-IEF/code/CreateImportParameterFiles.py micrograph
+    (cryo_ief) $ python path/to/Cryo-IEF/code/CreateImportParameterFiles.py particle
 
 After executing these commands, four folders will be created in the `parameter` folder: `import_parameters_0`, `import_parameters_1`, `import_parameters_2`, `import_parameters_3`, 
 corresponding to the movie, movie, micrograph, and particle jobs. Each `import_parameters_` folder will contain intact import parameters identical to those of CryoSPARC import jobs.
