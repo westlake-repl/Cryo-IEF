@@ -233,7 +233,7 @@ def model_inference(cfg, accelerator, use_features=False, features_max_num=50000
     accelerator.print('valset positive ratio:{}'.format(results['positive ratio']))
     accelerator.print('valset negative ratio:{}'.format(results['negative ratio']))
     if accelerator.is_local_main_process:
-        from Other_tools.select_particles import divide_selected_particles_id, get_particles_from_cs
+        # from Other_tools.select_particles import divide_selected_particles_id, get_particles_from_cs
         from Cryoemdata.cs_star_translate.cs2star import cs2star
 
         # labels_predicted_pd = pd.DataFrame(data=results['class_p'], columns=['labels_predicted'])

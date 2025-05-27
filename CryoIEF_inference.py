@@ -164,8 +164,8 @@ def CryoIEF_model_inference(cfg, accelerator):
                                                      )
 
     if accelerator.is_local_main_process:
-        from Other_tools.select_particles import divide_selected_particles_id, get_particles_from_cs
-        from Cryoemdata.cs_star_translate.cs2star import cs2star
+        # from Other_tools.select_particles import divide_selected_particles_id, get_particles_from_cs
+        # from Cryoemdata.cs_star_translate.cs2star import cs2star
 
         with open(os.path.join(cfg['path_result_dir'], 'features_all.data'), 'wb') as filehandle:
             pickle.dump(results['features_all'], filehandle)
