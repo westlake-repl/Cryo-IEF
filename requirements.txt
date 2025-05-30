@@ -1,7 +1,8 @@
 accelerate==0.29.2
-cryosparc-tools==4.4.1
 easydict==1.9
 flask==3.0.3
+flask-socketio==5.3.1
+eventlet==0.39.0
 matplotlib==3.8.4
 mrcfile==1.5.0
 natsort==8.4.0
@@ -21,3 +22,4 @@ timm==1.0.3
 torch==2.3.0
 torchvision==0.18.0
 tqdm==4.66.2
+lmdb==1.6.2
