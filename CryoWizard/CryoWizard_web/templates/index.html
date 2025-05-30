@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>CryoWizard</title>
+    <link type="text/css" rel="styleSheet" href="{{ url_for('static', filename='css/reset.css') }}">
+    <link type="text/css" rel="styleSheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link type="text/css" rel="styleSheet" href="{{ url_for('static', filename='css/bootstrap-icons.css') }}">
+    <link type="text/css" rel="styleSheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <script src="{{ url_for('static', filename='javascript/jquery.js') }}"></script>
+    <script src="{{ url_for('static', filename='javascript/socket.io.js') }}"></script>
+    <script type="text/javascript">const socket = io();</script>
+    <script src="{{ url_for('static', filename='javascript/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='javascript/index.js') }}"></script>
+    <script src="{{ url_for('static', filename='javascript/index_socketio.js') }}"></script>
+</head>
+<body>
+    <div class="container-fluid vh-100 m-0 p-0">
+        <div class="row w-100 h-100">
+            <!-- Nav tabs -->
+            <div class="col-md-2 h-100" style="width: 300px">
+                <div class="d-flex flex-column flex-shrink-0 p-3 text-white bg-dark h-100">
+                    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto w-100 text-white text-decoration-none"><span class="fs-4">CryoWizard</span></a>
+                    <hr>
+                    <ul class="nav nav-pills mb-auto" style="overflow: auto" id="project_card_content_div_nav"></ul>
+                    <hr>
+                    <button type="button" class="btn text-white" style="text-align: left" onclick="AddProjectCard();"><i class="bi bi-plus"></i>Add new project</button>
+                    <hr>
+                    <div><a href="https://github.com/westlake-repl/Cryo-IEF" target="_blank" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto w-100 text-white text-decoration-none">
+                        <small><i class="bi bi-github"></i> Cryo-IEF GitHub page</small>
+                    </a></div>
+                </div>
+            </div>
+            <!-- Tab panes -->
+            <div class="col w-auto h-100">
+                <div class="tab-content w-100 h-100" id="project_card_content_div_tab" style="overflow: auto"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            // project card
+            UpdateProjectCard();
+            console.log(GetSessionStorageJsonItem("project_card_count"), typeof GetSessionStorageJsonItem("project_card_count"));
+            console.log(GetSessionStorageJsonItem("project_card_dict"), typeof GetSessionStorageJsonItem("project_card_dict"));
+
+            // input card
+            UpdateInputCard();
+
+            // read project dir parameters
+            HtmlFirstLoadGetParameters();
+
+            // output panel show
+            setInterval(function(){ChooseActiveProjectToShowResults();}, 200);
+
+
+
+        });
+    </script>
+</body>
+</html>

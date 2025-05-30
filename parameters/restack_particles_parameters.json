@@ -1,6 +1,0 @@
-{
-    "Save results in 16-bit floating point": false,
-    "Num threads": 2,
-    "Num particles to extract": null,
-    "Particle batch size": 10000
-}

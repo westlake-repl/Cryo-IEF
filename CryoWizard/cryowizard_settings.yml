@@ -1,0 +1,46 @@
+# Output path
+path_result_dir: null
+#path_model_proj: null
+
+CryoWizardInstall: false
+CreateParameterFiles: false
+CreateImportParameterFiles: false
+ImportAndExtract: false
+SelectAndRefine: false
+TruncateParticles: false
+
+CryoWizardInstall_settings:
+   cryosparc_username: null
+   cryosparc_password: null
+   cryosparc_license: null
+   cryosparc_hostname: null
+   cryosparc_port: null
+   cryoranker_model_weight: null
+
+CreateParameterFiles_settings:
+   cryosparc_project: null
+   cryosparc_workspace: null
+   cryosparc_lane: default
+   if_slurm: false
+   inference_gpu_ids: null
+
+CreateImportParameterFiles_settings:
+   input_type: null
+   symmetry: C1
+   movies_data_path: null
+   gain_reference_path: null
+   micrographs_data_path: null
+   raw_pixel_size: null
+   accelerating_voltage: null
+   spherical_aberration: null
+   total_exposure_dose: null
+   particle_diameter: null
+   gpu_num: null
+   particle_job_uid: null
+
+TruncateParticles_settings:
+   truncation_type: num
+   particle_cutoff_condition: 100000
+
+CryoWizardWebApp_settings:
+   web_port: 38080

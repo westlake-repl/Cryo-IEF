@@ -1,8 +1,0 @@
-{
-    "Cone Half-angle (deg)": 20.0,
-    "Number of Directions": 3072,
-    "SCF Fourier Radius": 23,
-    "Symmetry": "C1",
-    "Use this many particles": 10000,
-    "Number of Threads": 24
-}
