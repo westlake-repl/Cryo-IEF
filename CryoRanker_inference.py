@@ -5,8 +5,8 @@ import torch
 import os
 import time
 from torch.utils.tensorboard import SummaryWriter
-from Cryoemdata.mrc_process import MyMrcData, raw_data_preprocess
-from Cryoemdata.cryoemDataset import EMDataset_from_path
+from Cryoemdata.data_preprocess.mrc_preprocess import raw_data_preprocess
+from Cryoemdata.cryoemDataset import EMDataset_from_path, MyMrcData
 import yaml
 from easydict import EasyDict
 from torch.utils.data import random_split
@@ -16,7 +16,7 @@ from accelerate import Accelerator
 from accelerate.utils import InitProcessGroupKwargs
 from datetime import timedelta
 import Cryo_IEF.vits as vits
-from Cryo_IEF.vits import  Classifier,Classifier_2linear,Classifier_new
+from Cryo_IEF.vits import Classifier, Classifier_2linear, Classifier_new
 import sys
 from tqdm import tqdm
 # from CryoRanker.edl_loss import edl_digamma_loss, one_hot_embedding, relu_evidence
@@ -25,11 +25,11 @@ from safetensors.torch import load_file
 import pandas as pd
 import torch.nn.functional as F
 from cryosparc.dataset import Dataset
-from sklearn.cluster import kmeans_plusplus, MiniBatchKMeans
+# from sklearn.cluster import kmeans_plusplus, MiniBatchKMeans
 import pickle
-from collections import defaultdict
-from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.preprocessing import StandardScaler
+# from collections import defaultdict
+# from sklearn.metrics.pairwise import euclidean_distances
+# from sklearn.preprocessing import StandardScaler
 from Cryoemdata.cs_star_translate.cs2star import cs2star
 
 # from thop import profile
@@ -38,7 +38,7 @@ t_import = time.time() - t_import_start
 
 
 def inference_processed_data(model, valid_loader, accelerator, is_calculate_acc=False, use_bnn_head=False,
-                             use_edl_loss=False,use_features=False,features_max_num=50000):
+                             use_edl_loss=False, use_features=False, features_max_num=50000):
     ''' Get the scores of the model on the dataset '''
     acc_correct_num = 0
     acc_num_all = 0
@@ -60,7 +60,6 @@ def inference_processed_data(model, valid_loader, accelerator, is_calculate_acc=
     class_p_all = []
     y_t_all = []
     features_all = []
-    uncertainty_all = []
     scores_predicted_all = []
     # scores_all = []
     # sorted_resampled_features=[]
@@ -78,12 +77,15 @@ def inference_processed_data(model, valid_loader, accelerator, is_calculate_acc=
 
             features = accelerator.gather_for_metrics(features)
 
-            y_p_softmax = F.softmax(y_p, dim=-1)
+            if y_p.shape[-1]==1:
+                scores_predicted= F.sigmoid(y_p.squeeze()).cpu().tolist()
+            else:
+                y_p_softmax = F.softmax(y_p, dim=-1)
 
-            numerator_pos = y_p_softmax[:, 1]
-            # denominator = y_p_softmax[:, 0] + y_p_softmax[:, 1]
-            denominator = torch.sum(y_p_softmax, dim=1)
-            scores_predicted = torch.div(numerator_pos, denominator).cpu().tolist()
+                numerator_pos = y_p_softmax[:, 1]
+                # denominator = y_p_softmax[:, 0] + y_p_softmax[:, 1]
+                denominator = torch.sum(y_p_softmax, dim=1)
+                scores_predicted = torch.div(numerator_pos, denominator).cpu().tolist()
             scores_predicted_all.extend(scores_predicted)
             # numerator = torch.max(y_p_softmax, dim=1).values
             # scores = torch.div(numerator, denominator)
@@ -179,7 +181,23 @@ def model_inference(cfg, accelerator, use_features=False, features_max_num=50000
         model.head = Classifier(input_dim=in_channels, output_dim=cfg['model']['num_classes'])
 
     # model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
-    state_dict = load_file(cfg['path_model_proj'] + '/model.safetensors', device='cpu')
+
+    if cfg['path_model_proj'] is not None:
+        if not os.path.exists(os.path.join(cfg['path_model_proj'], cfg['model_weight_name'])):
+            for filename in os.listdir(cfg['path_model_proj']):
+                if filename.endswith('.safetensors'):
+                    cfg['model_weight_name'] = filename
+                    break
+        state_dict = load_file(os.path.join(cfg['path_model_proj'], cfg['model_weight_name']), device='cpu')
+    else:
+        from CryoIEF_inference import download_model_weight
+        model_weight_save_path= os.path.join(cfg['path_proj_dir'], 'Cryo_IEF_checkpoint', cfg['model_weight_name'] )
+        model_weight_url=os.path.join(cfg['model_weight_url'], 'Cryo_IEF_checkpoint', cfg['model_weight_name'])
+        if accelerator.is_main_process:
+            download_model_weight(url=model_weight_url, save_path=model_weight_save_path)
+        accelerator.wait_for_everyone()
+        state_dict = load_file(model_weight_save_path, device='cpu')
+    # state_dict = load_file(cfg['path_model_proj'] + '/model.safetensors', device='cpu')
     model.load_state_dict(state_dict, strict=True)
 
     '''prepare the dataset'''
@@ -196,6 +214,7 @@ def model_inference(cfg, accelerator, use_features=False, features_max_num=50000
                             accelerator=accelerator)
 
     valset = EMDataset_from_path(mrcdata=mrcdata_val,
+                                 needs_aug2=False,
                                  # is_Normalize=cfg['augmentation_kwargs']['is_Normalize'],
                                  )
     valset.get_transforms(transforms_list_val)
@@ -256,13 +275,12 @@ def model_inference(cfg, accelerator, use_features=False, features_max_num=50000
     return results['scores_predicted_list'], results['features_all']
 
 
-def cryo_select_main(cfg=None, job_path=None, cache_file_path=None, accelerator=None, use_features=False,
-                     features_max_num=1000000):
+def cryoRanker_main(cfg=None, job_path=None, cache_file_path=None, accelerator=None, use_features=False,
+                    features_max_num=1000000):
     '''distribution'''
     if accelerator is None:
         accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=96000))])
     accelerator.print(cfg)
-
 
     accelerator.print('start inference')
     if cfg is None:
@@ -317,12 +335,14 @@ def cryo_select_main(cfg=None, job_path=None, cache_file_path=None, accelerator=
                 time_data_process_start = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
                 accelerator.print('Time of data process start: ' + time_data_process_start)
                 _ = raw_data_preprocess(cfg['raw_data_path'], processed_data_path,
-                                                               # csfile_path=cfg['particle_csfile_path'],
-                                                               resize=cfg['preprocess_kwargs']['resize'],
-                                                               is_to_int8=True)
+                                        # csfile_path=cfg['particle_csfile_path'],
+                                        resize=cfg['preprocess_kwargs']['resize'],
+                                        save_raw_data=False,
+                                        save_FT_data=False,
+                                        is_to_int8=True)
 
-                accelerator.print('Time of data process finish: ' + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()))
-
+                accelerator.print(
+                    'Time of data process finish: ' + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()))
 
             accelerator.wait_for_everyone()
             cfg['processed_data_path'] = processed_data_path
@@ -369,11 +389,12 @@ if __name__ == '__main__':
     '''get config'''
     parser = ArgumentParser()
 
-    parser.add_argument('--path_result_dir', default='/yanyang2/results/cryo_ranker/debug/25_5_16', type=str)
+    parser.add_argument('--path_result_dir',
+                        default=None,
+                        type=str)
     parser.add_argument('--raw_data_path',
                         default=None,
                         type=str)
-    # parser.add_argument('--path_model_proj', default='/yanyang2/projects/results/particle_classification/finetune_newmodel_newdata_p05_womix_full_add_rank_200e_smooth_002/2025_0107_190200_full_all_2048_0.5_/checkpoint/checkpoint_epoch_45', type=str)
     parser.add_argument('--path_model_proj',
                         default=None,
                         type=str)
@@ -385,7 +406,10 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=None, type=int)
     parser.add_argument('--model_name', default=None, type=str)
     # parser.add_argument('--num_select', default=None, type=float)
-    parser.add_argument('--num_select', default=None, type=int)
+    parser.add_argument('--num_select', default=40000, type=int)
+    parser.add_argument('--classifier', default='new', type=str)
+    parser.add_argument('--output_size', default=None, type=int)
+
 
 
     args = parser.parse_args()
@@ -421,10 +445,16 @@ if __name__ == '__main__':
     if args.num_select is not None:
         cfg['num_select'] = args.num_select
 
+    if args.classifier is not None:
+        cfg['model']['classifier'] = args.classifier
+
+    if args.output_size is not None:
+        cfg['model']['num_classes'] = args.output_size
+
     accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=96000))])
 
-    new_cs_data, scores, features_all = cryo_select_main(cfg=cfg, job_path=cfg['raw_data_path'],
-                                                         cache_file_path=cfg['path_result_dir'], use_features=True,accelerator=accelerator)
+    new_cs_data, scores, features_all = cryoRanker_main(cfg=cfg, job_path=cfg['raw_data_path'],
+                                                        cache_file_path=cfg['path_result_dir'], use_features=True, accelerator=accelerator)
 
     if accelerator.is_local_main_process:
         if cfg['num_select'] is not None and cfg['num_select'] > 0:
