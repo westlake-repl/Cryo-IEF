@@ -1,6 +1,8 @@
 # Output path
 path_result_dir: null
 path_model_proj: null
+model_weight_url: 'https://huggingface.co/westlake-repl/Cryo-IEF/resolve/main/'
+model_weight_name: 'cryo_ranker_v1_vit_b_model.safetensors'
 
 #raw_data_path: null
 raw_data_path: null
