@@ -5,8 +5,8 @@ import torch
 import os
 import time
 from torch.utils.tensorboard import SummaryWriter
-from Cryoemdata.mrc_process import MyMrcData, raw_data_preprocess
-from Cryoemdata.cryoemDataset import EMDataset_from_path
+from Cryoemdata.data_preprocess.mrc_preprocess import raw_data_preprocess
+from Cryoemdata.cryoemDataset import EMDataset_from_path, MyMrcData
 import yaml
 from easydict import EasyDict
 from torch.utils.data import random_split
@@ -16,7 +16,7 @@ from accelerate import Accelerator
 from accelerate.utils import InitProcessGroupKwargs
 from datetime import timedelta
 import Cryo_IEF.vits as vits
-from Cryo_IEF.vits import  Classifier,Classifier_2linear
+from Cryo_IEF.vits import Classifier, Classifier_2linear
 import sys
 from tqdm import tqdm
 import numpy as np
@@ -24,42 +24,25 @@ from safetensors.torch import load_file
 import torch.nn.functional as F
 # from cryosparc.dataset import Dataset
 import pickle
-from collections import defaultdict
+# from collections import defaultdict
+
+
 # t_import = time.time() - t_import_start
 # print('import time:{}'.format(t_import))
 
-def sort_labels_by_score(scores_score_list, label_list, uid):
-    """
-    Given a list of scores scores and a corresponding list of labels,
-    return a dictionary where the keys are the unique labels and the values
-    are lists of indices corresponding to the scores scores for that label,
-    sorted in descending order by scores score.
 
-    Parameters:
-    scores_score_list (list): A list of scores scores.
-    label_list (list): A list of labels corresponding to the scores scores.
-
-    Returns:
-    dict: A dictionary where the keys are the unique labels and the values
-          are lists of indices corresponding to the scores scores for that label,
-          sorted in descending order by scores score.
-    """
-    labels_set= list(set(label_list))
-    if len(scores_score_list) != len(label_list):
-        raise ValueError("scores score list and label list must have the same length.")
-
-    # Create a defaultdict to store the indices for each label
-    label_to_indices = defaultdict(dict)
-
-    # Zip the scores scores and labels together and sort by scores score
-    sorted_indices = sorted(range(len(scores_score_list)), key=lambda i: scores_score_list[i], reverse=True)
-
-    # Add the sorted indices to the defaultdict
-    for index in sorted_indices:
-        label_to_indices[labels_set.index(label_list[index])][uid[index]] = scores_score_list[index]
-    return dict(label_to_indices)
-
-
+def download_model_weight(url, save_path):
+    import requests
+    if not os.path.exists(save_path):
+        if not os.path.exists(os.path.dirname(save_path)):
+            os.makedirs(os.path.dirname(save_path))
+        print("Downloading model weights...")
+        response = requests.get(url, stream=True)
+        with open(save_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+    else:
+        print("Model weights already exist.")
 
 def features_inference_from_processed_data(model, valid_loader, accelerator,
                                            ):
@@ -70,24 +53,15 @@ def features_inference_from_processed_data(model, valid_loader, accelerator,
     with torch.no_grad():
         for data in tqdm(valid_loader, desc='evaluating', disable=not accelerator.is_local_main_process):
             x = data['aug1']
-            features ,y_p=model(x)
+            features, y_p = model(x)
             features = accelerator.gather_for_metrics(features)
             features_np = F.normalize(features, p=2, dim=1).cpu().numpy().astype(np.float16)
-            features_list=[features_np[i] for i in range(len(features_np))]
+            features_list = [features_np[i] for i in range(len(features_np))]
             features_all.extend(features_list)
 
-    return {'features_all':features_all}
+    return {'features_all': features_all}
 
 
-def merge_and_sort_lists(list1, list2, max_num):
-    # 合并两个列表
-    merged_list = list1 + list2
-
-    # 根据scores值从大到小排序
-    sorted_list = sorted(merged_list, key=lambda x: x[1], reverse=True)
-
-    # 如果排序后的列表长度小于max_num，返回全部；否则返回前max_num个元素
-    return sorted_list[:max_num]
 
 def CryoIEF_model_inference(cfg, accelerator):
     '''model'''
@@ -100,13 +74,26 @@ def CryoIEF_model_inference(cfg, accelerator):
 
     in_channels = model.head.in_features
 
-    if cfg['model']['classifier']=='2linear':
-        model.head=Classifier_2linear(input_dim=in_channels, output_dim=cfg['model']['num_classes'])
+    if cfg['model']['classifier'] == '2linear':
+        model.head = Classifier_2linear(input_dim=in_channels, output_dim=cfg['model']['num_classes'])
     else:
         model.head = Classifier(input_dim=in_channels, output_dim=cfg['model']['num_classes'])
 
     # model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
-    state_dict = load_file(cfg['path_model_proj'] + '/model.safetensors', device='cpu')
+    if cfg['path_model_proj'] is not None:
+        if not os.path.exists(os.path.join(cfg['path_model_proj'], cfg['model_weight_name'])):
+            for filename in os.listdir(cfg['path_model_proj']):
+                if filename.endswith('.safetensors'):
+                    cfg['model_weight_name'] = filename
+                    break
+        state_dict = load_file(os.path.join(cfg['path_model_proj'], cfg['model_weight_name']), device='cpu')
+    else:
+        model_weight_save_path= os.path.join(cfg['path_proj_dir'], 'Cryo_IEF_checkpoint', cfg['model_weight_name'] )
+        model_weight_url=os.path.join(cfg['model_weight_url'], 'Cryo_IEF_checkpoint', cfg['model_weight_name'])
+        if accelerator.is_main_process:
+            download_model_weight(url=model_weight_url, save_path=model_weight_save_path)
+        accelerator.wait_for_everyone()
+        state_dict = load_file(model_weight_save_path, device='cpu')
     my_state_dict = {}
     linear_keyword = 'head'
     for k in list(state_dict.keys()):
@@ -117,10 +104,10 @@ def CryoIEF_model_inference(cfg, accelerator):
         if k.startswith('base_encoder.head.'):
             my_state_dict['projector' + k[len('base_encoder.head'):]] = state_dict[k]
 
-    if len(my_state_dict)==0:
-        msg=model.load_state_dict(state_dict, strict=False)
+    if len(my_state_dict) == 0:
+        msg = model.load_state_dict(state_dict, strict=False)
     else:
-        msg=model.load_state_dict(my_state_dict, strict=False)
+        msg = model.load_state_dict(my_state_dict, strict=False)
 
     '''prepare the dataset'''
     batch_size = cfg['batch_size']
@@ -130,23 +117,24 @@ def CryoIEF_model_inference(cfg, accelerator):
     transforms_list_val = get_transformers.get_val_transformations(cfg['augmentation_kwargs'],
                                                                    mean_std=(0.53786290141223, 0.11803331075935841))
 
-
     mrcdata_val = MyMrcData(mrc_path=cfg['raw_data_path'], emfile_path=None, tmp_data_save_path=cfg['path_result_dir'],
                             processed_data_path=cfg['processed_data_path'],
                             selected_emfile_path=None, cfg=cfg['preprocess_kwargs'], is_extra_valset=True,
                             accelerator=accelerator)
 
     valset = EMDataset_from_path(mrcdata=mrcdata_val,
-                                 is_Normalize=cfg['augmentation_kwargs']['is_Normalize'], )
+                                 # is_Normalize=cfg['augmentation_kwargs']['is_Normalize'],
+                                 needs_aug2=False
+                                 )
     valset.get_transforms(transforms_list_val)
     valset.local_crops_number = 0
 
-    if len(cfg['valset_name']) > 0:
-        _, valset_index, _, _, _ = mrcdata_val.preprocess_trainset_valset_index(cfg['valset_name'],
-                                                                                is_balance=True,
-                                                                                max_resample_num_val=cfg[
-                                                                                    'max_resample_number'])
-        valset = torch.utils.data.Subset(valset, valset_index)
+    # if len(cfg['valset_name']) > 0:
+    #     _, valset_index, _, _, _ = mrcdata_val.preprocess_trainset_valset_index(cfg['valset_name'],
+    #                                                                             is_balance=True,
+    #                                                                             max_resample_num_val=cfg[
+    #                                                                                 'max_resample_number'])
+    #     valset = torch.utils.data.Subset(valset, valset_index)
 
     val_dataloader = torch.utils.data.DataLoader(valset,
                                                  batch_size=batch_size,
@@ -173,33 +161,28 @@ def CryoIEF_model_inference(cfg, accelerator):
         accelerator.print('features are saved in {}'.format(os.path.join(cfg['path_result_dir'], 'features_all.data')))
 
 
-
-def cryo_features_main(cfg=None,job_path=None,cache_file_path=None,accelerator=None,features_max_num=1000000):
-
+def cryo_features_main(cfg=None, job_path=None, cache_file_path=None, accelerator=None):
     '''distribution'''
     if accelerator is None:
         accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=96000))])
     # accelerator.print(cfg)
-
 
     accelerator.print('start inference')
     if cfg is None:
         cfg = EasyDict()
 
         with open(
-                 os.path.dirname(os.path.abspath(__file__))+'/CryoRanker/cryoranker_inference_settings.yml',
+                os.path.dirname(os.path.abspath(__file__)) + '/Cryo_IEF/cryo_ief_inference_settings.yml',
                 'r') as stream:
             config = yaml.safe_load(stream)
-
 
         for k, v in config.items():
             cfg[k] = v
 
         if job_path is not None:
-            cfg['raw_data_path']=job_path
+            cfg['raw_data_path'] = job_path
         if cache_file_path is not None:
-            cfg['path_result_dir']=cache_file_path
-
+            cfg['path_result_dir'] = cache_file_path
 
     if accelerator.is_local_main_process:
         if not os.path.exists(cfg['path_result_dir']):
@@ -216,11 +199,12 @@ def cryo_features_main(cfg=None,job_path=None,cache_file_path=None,accelerator=N
     accelerator.print('Time of run: ' + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()))
 
     '''inference'''
-    features_all=[]
+    # features_all = []
     processed_data_path = os.path.join(cfg['path_result_dir'], 'processed_data')
     new_cs_data_path = processed_data_path + '/new_particles.cs'
 
-    if cfg['processed_data_path'] is not None or (os.path.exists(new_cs_data_path) and os.path.exists(processed_data_path + '/output_tif_path.data')):
+    if cfg['processed_data_path'] is not None or (
+            os.path.exists(new_cs_data_path) and os.path.exists(processed_data_path + '/output_tif_path.data')):
         # processed_data_path = cfg['processed_data_path']
         # new_cs_data = Dataset.load(new_cs_data_path)
         if cfg['processed_data_path'] is None:
@@ -229,16 +213,16 @@ def cryo_features_main(cfg=None,job_path=None,cache_file_path=None,accelerator=N
     elif cfg['raw_data_path'] is not None:
 
         if accelerator.is_local_main_process:
-
             time_data_process_start = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
             accelerator.print('Time of data process start: ' + time_data_process_start)
             _ = raw_data_preprocess(cfg['raw_data_path'], processed_data_path,
-                                                           # csfile_path=cfg['particle_csfile_path'],
-                                                           resize=cfg['preprocess_kwargs']['resize'],
-                                                           is_to_int8=True)
+                                    # csfile_path=cfg['particle_csfile_path'],
+                                    resize=cfg['preprocess_kwargs']['resize'],
+                                    save_raw_data=False,
+                                    save_FT_data=False,
+                                    is_to_int8=True)
 
             accelerator.print('Time of data process finish: ' + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()))
-
 
         accelerator.wait_for_everyone()
         cfg['processed_data_path'] = processed_data_path
@@ -248,10 +232,9 @@ def cryo_features_main(cfg=None,job_path=None,cache_file_path=None,accelerator=N
     else:
         print('We need processed_data_path or raw_data_path to generate the dataset!')
         sys.exit(0)
-    accelerator.print('Time of start inference: '+time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) )
+    accelerator.print('Time of start inference: ' + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()))
     CryoIEF_model_inference(cfg, accelerator)
-    accelerator.print('Time of finish inference: '+time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) )
-
+    accelerator.print('Time of finish inference: ' + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()))
 
 
 if __name__ == '__main__':
@@ -260,10 +243,8 @@ if __name__ == '__main__':
     parser.add_argument('--path_result_dir', default=None, type=str)
     parser.add_argument('--raw_data_path', default=None, type=str)
     parser.add_argument('--path_model_proj', default=None, type=str)
-
     parser.add_argument('--batch_size', default=None, type=int)
     parser.add_argument('--model_name', default=None, type=str)
-
 
     args = parser.parse_args()
 
@@ -272,12 +253,10 @@ if __name__ == '__main__':
     args.path_proj_dir = os.path.dirname(os.path.abspath(__file__))
 
     with open(
-            args.path_proj_dir + '/CryoRanker/cryoranker_inference_settings.yml',
+            args.path_proj_dir + '/Cryo_IEF/cryo_ief_inference_settings.yml',
             'r') as stream:
         config = yaml.safe_load(stream)
     # else:
-
-
 
     for k, v in config.items():
         cfg[k] = v
@@ -291,16 +270,14 @@ if __name__ == '__main__':
         else:
             cfg['raw_data_path'] = args.raw_data_path
 
-
     if args.path_model_proj is not None:
         cfg['path_model_proj'] = args.path_model_proj
 
     if args.batch_size is not None:
         cfg['batch_size'] = args.batch_size
+
+    if args.path_proj_dir is not None:
+        cfg['path_proj_dir'] = args.path_proj_dir
     '''Main function'''
-    cryo_features_main(cfg=cfg,job_path=cfg['raw_data_path'],cache_file_path=cfg['path_result_dir'],features_max_num=cfg['max_resample_number'])
-
-
-
-
-
+    cryo_features_main(cfg=cfg, job_path=cfg['raw_data_path'], cache_file_path=cfg['path_result_dir'],
+                       )

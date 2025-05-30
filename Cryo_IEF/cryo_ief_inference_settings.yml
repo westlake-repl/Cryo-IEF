@@ -1,0 +1,51 @@
+# Output path
+path_result_dir: null
+path_model_proj: null
+model_weight_url: 'https://huggingface.co/westlake-repl/Cryo-IEF/resolve/main/'
+model_weight_name: 'cryo_ranker_v1_vit_b_model.safetensors'
+
+raw_data_path: null
+processed_data_path: null
+pixelsize: null
+particle_csfile_path: null
+
+batch_size: 512
+cut_ratio: 0.0
+
+num_select: 0
+
+
+model:
+   model_name: moco_v3
+   use_bnn_head: false
+   use_edl_loss: false
+   num_classes: 2
+   backbone_name: 'vit_base'
+   use_bn: true
+   stop_grad_conv1: false
+   patch_size: 14
+#   classifier: '2linear'
+   classifier: '1linear'
+#   classifier: 'new'
+
+
+
+
+augmentation_kwargs:
+
+   augmentation_strategy: user-defined
+
+   is_Normalize: true
+
+
+   frequency_domain:
+      strategy: null  # patch or whole or None
+      is_add: true
+      is_only: false
+
+
+## Preprocess
+
+preprocess_kwargs:
+   crop_ratio: null
+   resize: 224
