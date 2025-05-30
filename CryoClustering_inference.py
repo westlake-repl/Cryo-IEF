@@ -120,12 +120,7 @@ if __name__ == '__main__':
     parser.add_argument('--raw_data_path', default=None, type=str)
     parser.add_argument('--processed_data_path', default=None, type=str)
     parser.add_argument('--features_path', default=None, type=str)
-    # parser.add_argument('--path_model_proj', default=None, type=str)
-
-    # parser.add_argument('--path_model_proj', default='/yanyang2/projects/results/cryoem_pretrain/2024_1126_151451_moco3_vit_b14_bn_newcode_olddata_newdataloader_crop_t02/checkpoint/checkpoint_epoch_20/', type=str)
-    # parser.add_argument('--path_model_proj', default='/yanyang2/projects/results/cryoem_pretrain//2024_0605_102550_moco_vit_b14_bn_oldcode_30bad/checkpoint/checkpoint_epoch_22/', type=str)
-    parser.add_argument('--path_model_proj', default='/yanyang2/results/cryoem_pretrain/2024_0604_095207_moco_vit_b14_bn_oldcode_10bad_t05/checkpoint/checkpoint_epoch_0/', type=str)
-    # parser.add_argument('--path_model_proj', default='/yanyang2/results/cryoem_pretrain/2025_0118_171451_moco3_vit_b14_bn_3072_data_v1_8_class_m01_t01_slice_test_190r300/checkpoint/checkpoint_epoch_29/', type=str)
+    parser.add_argument('--path_model_proj', default=None, type=str)
 
     parser.add_argument('--batch_size', default=None, type=int)
     # parser.add_argument('--model_name', default=None, type=str)
