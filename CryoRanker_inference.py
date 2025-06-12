@@ -65,7 +65,7 @@ def inference_processed_data(model, valid_loader, accelerator, is_calculate_acc=
     # sorted_resampled_features=[]
     model.eval()
     with torch.no_grad():
-        for data in tqdm(valid_loader, desc='evaluating', disable=not accelerator.is_local_main_process):
+        for data in tqdm(valid_loader, desc='CryoRanker inference', disable=not accelerator.is_local_main_process):
             # for data in valid_loader:
             x = data['aug1']
             y_t = accelerator.gather_for_metrics(data['label_for_classification'])
@@ -234,7 +234,7 @@ def model_inference(cfg, accelerator, use_features=False, features_max_num=50000
                                                  pin_memory=True,
                                                  persistent_workers=True,
                                                  )
-    accelerator.print('dataset len:{}'.format(len(valset)))
+    accelerator.print('Particles number:{}'.format(len(valset)))
 
     model, val_dataloader = accelerator.prepare(model, val_dataloader)
     '''reference'''
@@ -249,11 +249,11 @@ def model_inference(cfg, accelerator, use_features=False, features_max_num=50000
         accelerator.print('valset precision:{}'.format(results['precision']))
         accelerator.print('valset loss:{}'.format(results['loss']))
 
-    accelerator.print('valset positive ratio:{}'.format(results['positive ratio']))
-    accelerator.print('valset negative ratio:{}'.format(results['negative ratio']))
+    # accelerator.print('valset positive ratio:{}'.format(results['positive ratio']))
+    # accelerator.print('valset negative ratio:{}'.format(results['negative ratio']))
     if accelerator.is_local_main_process:
         # from Other_tools.select_particles import divide_selected_particles_id, get_particles_from_cs
-        from Cryoemdata.cs_star_translate.cs2star import cs2star
+        # from Cryoemdata.cs_star_translate.cs2star import cs2star
 
         # labels_predicted_pd = pd.DataFrame(data=results['class_p'], columns=['labels_predicted'])
         # labels_predicted_pd.to_csv(os.path.join(cfg['path_result_dir'], 'labels_predicted.csv'), index=False)
@@ -357,7 +357,7 @@ def cryoRanker_main(cfg=None, job_path=None, cache_file_path=None, accelerator=N
                                                features_max_num=features_max_num)
         accelerator.print('Time of finish inference: ' + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()))
     else:
-        accelerator.print('labels_predicted.csv and uncertainty_list.csv already exist!')
+        accelerator.print('labels_predicted.csv already exist!')
 
         new_cs_data = Dataset.load(cfg['path_result_dir'] + '/processed_data/new_particles.cs')
         scores = pd.read_csv(cfg['path_result_dir'] + '/scores_predicted_list.csv')[

@@ -51,7 +51,7 @@ def features_inference_from_processed_data(model, valid_loader, accelerator,
 
     model.eval()
     with torch.no_grad():
-        for data in tqdm(valid_loader, desc='evaluating', disable=not accelerator.is_local_main_process):
+        for data in tqdm(valid_loader, desc='CryoIEF inference', disable=not accelerator.is_local_main_process):
             x = data['aug1']
             features, y_p = model(x)
             features = accelerator.gather_for_metrics(features)
@@ -143,7 +143,7 @@ def CryoIEF_model_inference(cfg, accelerator):
                                                  pin_memory=True,
                                                  persistent_workers=True,
                                                  )
-    accelerator.print('dataset len:{}'.format(len(valset)))
+    accelerator.print('Particles number:{}'.format(len(valset)))
 
     model, val_dataloader = accelerator.prepare(model, val_dataloader)
     '''reference'''
@@ -158,7 +158,7 @@ def CryoIEF_model_inference(cfg, accelerator):
         with open(os.path.join(cfg['path_result_dir'], 'features_all.data'), 'wb') as filehandle:
             pickle.dump(results['features_all'], filehandle)
 
-        accelerator.print('features are saved in {}'.format(os.path.join(cfg['path_result_dir'], 'features_all.data')))
+        accelerator.print('CryoIEF features are saved in {}'.format(os.path.join(cfg['path_result_dir'], 'features_all.data')))
 
 
 def cryo_features_main(cfg=None, job_path=None, cache_file_path=None, accelerator=None):
@@ -167,7 +167,7 @@ def cryo_features_main(cfg=None, job_path=None, cache_file_path=None, accelerato
         accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=96000))])
     # accelerator.print(cfg)
 
-    accelerator.print('start inference')
+    accelerator.print('Start inference')
     if cfg is None:
         cfg = EasyDict()
 

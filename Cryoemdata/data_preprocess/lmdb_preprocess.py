@@ -48,7 +48,7 @@ def create_lmdb_dataset(image_path_list, lmdb_path,  map_size=1024 ** 4, num_pro
         with env.begin(write=True) as txn:
             global_item_index = 0
             # 创建两个进度条：处理文件和写入项目
-            with tqdm(total=len(tasks), desc="Processing files") as pbar_files:
+            with tqdm(total=len(tasks), desc="Preprocessing cryoem data") as pbar_files:
                 # tqdm(desc="Writing items to LMDB") as pbar_items:
                 for original_idx, path_id_data, item_list in results_iterator:
                     if item_list:  # 如果处理成功且有数据

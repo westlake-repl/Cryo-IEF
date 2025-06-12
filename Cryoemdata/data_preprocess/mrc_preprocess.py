@@ -443,7 +443,7 @@ def raw_data_preprocess(raw_dataset_dir, dataset_save_dir, resize=224, is_to_int
             with open(dataset_save_dir + 'means_stds_FT.data', 'wb') as filehandle:
                 pickle.dump(mean_std_FT, filehandle)
 
-    print('raw data process all done')
+    print('Cryoem data preprocess all done')
     return new_cs_data
 def append_data(name,cs_data,indices_dict):
     # mm=np.sort(indices_dict[name])
