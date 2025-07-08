@@ -71,21 +71,30 @@ new_particles_cs, confidence, features_all = CryoRanker_inference.cryoRanker_mai
 
 if accelerator.is_main_process:
 
-    new_info = [[] for _ in range(len(new_particles_cs))]
+    # new_info = [[] for _ in range(len(new_particles_cs))]
+    new_info = []
     for i in range(len(new_particles_cs)):
         new_mrcfile = new_particles_cs[i]['blob/path']
         new_idx = new_particles_cs[i]['blob/idx']
-        new_info[i] = [new_mrcfile + (str)(new_idx), i]
+        # new_info[i] = [new_mrcfile + (str)(new_idx), i]
+        new_info.append([new_mrcfile + (str)(new_idx), i])
     new_info = sorted(new_info, key=lambda x: x[0])
-    source_info = [[] for _ in range(len(new_particles_cs))]
+    # source_info = [[] for _ in range(len(new_particles_cs))]
+    source_info = []
     for i in range(len(new_particles_cs)):
         source_mrcfile = source_particles_cs[i]['blob/path']
         source_idx = source_particles_cs[i]['blob/idx']
         source_uid = source_particles_cs[i]['uid']
-        source_info[i] = [source_mrcfile + (str)(source_idx), (int)(source_uid)]
+        # source_info[i] = [source_mrcfile + (str)(source_idx), (int)(source_uid)]
+        source_info.append([source_mrcfile + (str)(source_idx), (int)(source_uid)])
     source_info = sorted(source_info, key=lambda x: x[0])
     confidence_dict = {}
     features_dict = {}
+    # print('Scores length:'+ str(len(confidence)))
+    # print('source info length:'+ str(len(source_info)))
+    # print('new info length:'+ str(len(new_info)))
+    # print('source info 0:'+ str(source_info[0]))
+    # print('new info 0:'+ str(new_info[0]))
     for i in range(len(new_particles_cs)):
         if (new_info[i][0] == source_info[i][0]):
             if if_initial_orientation_balance:

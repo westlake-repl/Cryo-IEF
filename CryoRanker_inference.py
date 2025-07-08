@@ -4,12 +4,14 @@ t_import_start = time.time()
 import torch
 import os
 import time
-from torch.utils.tensorboard import SummaryWriter
-from Cryoemdata.data_preprocess.mrc_preprocess import raw_data_preprocess
-from Cryoemdata.cryoemDataset import EMDataset_from_path, MyMrcData
+# from torch.utils.tensorboard import SummaryWriter
+# import pytorch-cuda
+# from Cryoemdata.data_preprocess.mrc_preprocess import raw_data_preprocess
+from cryodata.data_preprocess.mrc_preprocess import raw_data_preprocess
+from cryodata.cryoemDataset import CryoEMDataset, CryoMetaData
 import yaml
 from easydict import EasyDict
-from torch.utils.data import random_split
+# from torch.utils.data import random_split
 from Cryo_IEF import get_transformers
 from argparse import ArgumentParser
 from accelerate import Accelerator
@@ -30,7 +32,7 @@ import pickle
 # from collections import defaultdict
 # from sklearn.metrics.pairwise import euclidean_distances
 # from sklearn.preprocessing import StandardScaler
-from Cryoemdata.cs_star_translate.cs2star import cs2star
+from cryodata.cs_star_translate.cs2star import cs2star
 
 # from thop import profile
 t_import = time.time() - t_import_start
@@ -208,12 +210,12 @@ def model_inference(cfg, accelerator, use_features=False, features_max_num=50000
     transforms_list_val = get_transformers.get_val_transformations(cfg['augmentation_kwargs'],
                                                                    mean_std=(0.53786290141223, 0.11803331075935841))
 
-    mrcdata_val = MyMrcData(mrc_path=cfg['raw_data_path'], emfile_path=None, tmp_data_save_path=cfg['path_result_dir'],
+    mrcdata_val = CryoMetaData(mrc_path=cfg['raw_data_path'], emfile_path=None, tmp_data_save_path=cfg['path_result_dir'],
                             processed_data_path=cfg['processed_data_path'],
                             selected_emfile_path=None, cfg=cfg['preprocess_kwargs'], is_extra_valset=True,
                             accelerator=accelerator)
 
-    valset = EMDataset_from_path(mrcdata=mrcdata_val,
+    valset = CryoEMDataset(metadata=mrcdata_val,
                                  needs_aug2=False,
                                  # is_Normalize=cfg['augmentation_kwargs']['is_Normalize'],
                                  )
@@ -339,7 +341,9 @@ def cryoRanker_main(cfg=None, job_path=None, cache_file_path=None, accelerator=N
                                         resize=cfg['preprocess_kwargs']['resize'],
                                         save_raw_data=False,
                                         save_FT_data=False,
-                                        is_to_int8=True)
+                                        is_to_int8=True,
+                                        num_processes=6
+                                        )
 
                 accelerator.print(
                     'Time of data process finish: ' + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()))
@@ -452,6 +456,9 @@ if __name__ == '__main__':
         cfg['model']['num_classes'] = args.output_size
 
     accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=96000))])
+    if "LOCAL_RANK" in os.environ:
+        CUDA_VISIBLE_DEVICES = int(os.environ["LOCAL_RANK"])
+        torch.distributed.barrier(device_ids=[int(os.environ["LOCAL_RANK"])])
 
     new_cs_data, scores, features_all = cryoRanker_main(cfg=cfg, job_path=cfg['raw_data_path'],
                                                         cache_file_path=cfg['path_result_dir'], use_features=True, accelerator=accelerator)
@@ -461,4 +468,6 @@ if __name__ == '__main__':
             accelerator.print('Selecting particles by score...')
             selected_particles = select_particles_by_score(new_cs_data=new_cs_data, scores=scores,num_select= cfg['num_select'], save_path= cfg['path_result_dir'])
             accelerator.print('Selected particles saved to {}'.format(cfg['path_result_dir'] + '/selected_particles_top_{}.cs'.format(cfg['num_select'])))
+            accelerator.print('Selected particles saved to {}'.format(cfg['path_result_dir'] + '/selected_particles_top_{}.star'.format(cfg['num_select'])))
     accelerator.wait_for_everyone()
+    accelerator.state.destroy_process_group()

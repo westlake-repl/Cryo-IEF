@@ -10,7 +10,7 @@ from cryosparc.dataset import Dataset
 from CryoIEF_inference import  cryo_features_main
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import kmeans_plusplus, MiniBatchKMeans
-from Cryoemdata.cs_star_translate.cs2star import cs2star
+from cryodata.cs_star_translate.cs2star import cs2star
 from accelerate.utils import InitProcessGroupKwargs
 from accelerate import Accelerator
 from datetime import timedelta
@@ -111,6 +111,8 @@ def cryo_clustering_main(cfg,accelerator=None):
             cs_save_path=results_path+'/cluster_'+str(i)+'.cs'
             cs_sub_data.save(cs_save_path)
             cs2star(cs_save_path,cs_save_path.replace('.cs','.star'))
+    accelerator.wait_for_everyone()
+    accelerator.state.destroy_process_group()
 
 
 if __name__ == '__main__':

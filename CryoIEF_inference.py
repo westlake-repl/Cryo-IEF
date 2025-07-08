@@ -4,12 +4,12 @@ import time
 import torch
 import os
 import time
-from torch.utils.tensorboard import SummaryWriter
-from Cryoemdata.data_preprocess.mrc_preprocess import raw_data_preprocess
-from Cryoemdata.cryoemDataset import EMDataset_from_path, MyMrcData
+# from torch.utils.tensorboard import SummaryWriter
+from cryodata.data_preprocess.mrc_preprocess import raw_data_preprocess
+from cryodata.cryoemDataset import CryoEMDataset, CryoMetaData
 import yaml
 from easydict import EasyDict
-from torch.utils.data import random_split
+# from torch.utils.data import random_split
 from Cryo_IEF import get_transformers
 from argparse import ArgumentParser
 from accelerate import Accelerator
@@ -117,12 +117,12 @@ def CryoIEF_model_inference(cfg, accelerator):
     transforms_list_val = get_transformers.get_val_transformations(cfg['augmentation_kwargs'],
                                                                    mean_std=(0.53786290141223, 0.11803331075935841))
 
-    mrcdata_val = MyMrcData(mrc_path=cfg['raw_data_path'], emfile_path=None, tmp_data_save_path=cfg['path_result_dir'],
+    mrcdata_val = CryoMetaData(mrc_path=cfg['raw_data_path'], emfile_path=None, tmp_data_save_path=cfg['path_result_dir'],
                             processed_data_path=cfg['processed_data_path'],
                             selected_emfile_path=None, cfg=cfg['preprocess_kwargs'], is_extra_valset=True,
                             accelerator=accelerator)
 
-    valset = EMDataset_from_path(mrcdata=mrcdata_val,
+    valset = CryoEMDataset(metadata=mrcdata_val,
                                  # is_Normalize=cfg['augmentation_kwargs']['is_Normalize'],
                                  needs_aug2=False
                                  )
@@ -166,7 +166,9 @@ def cryo_features_main(cfg=None, job_path=None, cache_file_path=None, accelerato
     if accelerator is None:
         accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=96000))])
     # accelerator.print(cfg)
-
+    if "LOCAL_RANK" in os.environ:
+        CUDA_VISIBLE_DEVICES = int(os.environ["LOCAL_RANK"])
+        torch.distributed.barrier(device_ids=[int(os.environ["LOCAL_RANK"])])
     accelerator.print('Start inference')
     if cfg is None:
         cfg = EasyDict()
@@ -235,6 +237,8 @@ def cryo_features_main(cfg=None, job_path=None, cache_file_path=None, accelerato
     accelerator.print('Time of start inference: ' + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()))
     CryoIEF_model_inference(cfg, accelerator)
     accelerator.print('Time of finish inference: ' + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()))
+    accelerator.wait_for_everyone()
+    accelerator.state.destroy_process_group()
 
 
 if __name__ == '__main__':
