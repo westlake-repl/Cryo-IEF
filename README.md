@@ -49,7 +49,7 @@ To generate particle features with Cryo-IEF encoder, run the following command:
     (base) $ conda activate cryo_ief
     (cryo_ief) $ accelerate launch path/to/Cryo-IEF/code/CryoIEF_inference.py --path_result_dir dir/to/save/results --path_model_proj dir/to/CryoIEF_model_weight --raw_data_path dir/to/cryoSPARC_job
 Cryo-IEF is compatible with cryoSPARC job types that generate particle outputs, including `Extracted Particles`, `Restack Particles`, and `Particles Sets`. 
-By default, all available GPUs will be utilized for inference. Users can specify the number of GPUs to use with `--gpu_num` or list specific GPU IDs with `--gpu_ids` (e.g. `--gpu_ids 0,1,2,3`).
+By default, all available GPUs will be utilized for inference. Users can add `--num_processes` or list specific GPU IDs with `--gpu_ids` (e.g. `--gpu_ids 0,1,2,3`) between `accelerate launch` and `path/to/Cryo-IEF/code/CryoRanker_inference.py` to specify the number of GPUs to use.
 
 The particle features extracted by the Cryo-IEF encoder are saved by default to `dir/to/save/results/features_all.data`.
 The order of features corresponds to the particle order in the`.cs` file located within `dir/to/cryoSPARC_job`.
@@ -64,7 +64,7 @@ fine-tuned on a labeled dataset to rank particle images by quality.
     (base) $ conda activate cryo_ief
     (cryo_ief) $ accelerate launch path/to/Cryo-IEF/code/CryoRanker_inference.py --path_result_dir dir/to/save/results --path_model_proj dir/to/CryoRanker_model_weight --raw_data_path dir/to/cryoSPARC_job --num_select N
 CryoRanker is compatible with cryoSPARC job types that generate particle outputs, including `Extracted Particles`, `Restack Particles`, and `Particles Sets`. 
-By default, all available GPUs will be utilized for inference. Users can specify the number of GPUs to use with `--gpu_num` or list specific GPU IDs with `--gpu_ids` (e.g. `--gpu_ids 0,1,2,3`).
+By default, all available GPUs will be utilized for inference. Users can add `--num_processes` or list specific GPU IDs with `--gpu_ids` (e.g. `--gpu_ids 0,1,2,3`) between `accelerate launch` and `path/to/Cryo-IEF/code/CryoRanker_inference.py` to specify the number of GPUs to use.
 
 Predicted scores are saved in `dir/to/save/results/scores_predicted_list.csv`.
 The order of scores corresponds to the particle order in the `.cs` file located within `dir_to_cryoSPARC_job`.
