@@ -23,4 +23,4 @@ torch==2.6.0
 torchvision==0.21.0
 tqdm==4.66.2
 lmdb==1.6.2
-cryodata==0.1.0b15
+cryodata==0.1.1b1
