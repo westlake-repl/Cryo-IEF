@@ -6,6 +6,19 @@
 
 We present the Cryo-EM Image Evaluation Foundation (Cryo-IEF) model, which has been pre-trained on a substantial dataset comprising approximately 65 million cryo-EM particle images using unsupervised learning techniques. Cryo-IEF excels in various cryo-EM data processing tasks, such as classifying particles from different structures, clustering particles by pose, and assessing the quality of particle images. Upon fine-tuning, the model effectively ranks particle images by quality, enabling the creation of CryoWizard—a fully automated single-particle cryo-EM data processing pipeline. 
 
+
+```
+@article{yan2024comprehensive,
+  title={A comprehensive foundation model for cryo-EM image processing},
+  author={Yan, Yang and Fan, Shiqi and Yuan, Fajie and Shen, Huaizong},
+  journal={bioRxiv},
+  pages={2024--11},
+  year={2024},
+  publisher={Cold Spring Harbor Laboratory}
+}
+```
+
+
 ## Installation
 
 ### Step 1: Conda Environment Setup
