@@ -411,7 +411,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_name', default=None, type=str)
     # parser.add_argument('--num_select', default=None, type=float)
     parser.add_argument('--num_select', default=40000, type=int)
-    parser.add_argument('--classifier', default='new', type=str)
+    parser.add_argument('--classifier', default=None, type=str)
     parser.add_argument('--output_size', default=None, type=int)
 
 
