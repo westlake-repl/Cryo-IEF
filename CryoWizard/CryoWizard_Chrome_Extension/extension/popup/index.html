@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>CryoWizard</title>
+    <link type="text/css" rel="styleSheet" href="./css/reset.css">
+    <link type="text/css" rel="styleSheet" href="./css/bootstrap.min.css">
+    <link type="text/css" rel="styleSheet" href="./css/bootstrap-icons.css">
+    <link type="text/css" rel="styleSheet" href="./css/index.css">
+    <script src="./javascript/jquery.js"></script>
+    <script src="./javascript/socket.io.js"></script>
+    <script src="./javascript/bootstrap.bundle.min.js"></script>
+    <script src="./javascript/index.js"></script>
+</head>
+<body>
+    <div class="p-3 m-0" style="width: 600px">
+        <div class="container mt-3">
+            <h2>CryoWizard</h2>
+            <div class="mb-3 mt-3">
+                <label for="cryowizard_connect_parameters_address" class="form-label">CryoWizard Server Address:</label>
+                <input type="email" id="cryowizard_connect_parameters_address" class="form-control" placeholder="Enter Server Address (e.g. http://192.168.0.1:38080)" name="address">
+            </div>
+            <div class="mb-3 mt-3">
+                <label for="cryowizard_connect_parameters_email" class="form-label">CryoSPARC Username:</label>
+                <input type="email" id="cryowizard_connect_parameters_email" class="form-control" placeholder="Enter CryoSPARC Username" name="username">
+            </div>
+            <div class="mb-3">
+                <label for="cryowizard_connect_parameters_password" class="form-label">CryoSPARC Password:</label>
+                <input type="password" id="cryowizard_connect_parameters_password" class="form-control" placeholder="Enter CryoSPARC Password" name="password">
+            </div>
+            <button type="submit" id="cryowizard_connect_parameters_save_button" class="btn btn-primary">Save</button>
+        </div>
+    </div>
+</body>
+</html>

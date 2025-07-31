@@ -81,28 +81,44 @@ def ImportAndExtract(project_dir):
             continue
         source_input_parameters_folder = globaldir + 'parameters/' + parameter_item + '/'
         source_input_type = mytoolbox.readjson(source_input_parameters_folder + 'input_type.json')
-        if (source_input_type == 'Movies'):
+        if ((source_input_type == 'Movies') or (source_input_type == 'extension_movies')):
             # import movie，motion correction，ctf estimation，blob pick，extract，获得particles
             '''import movie, motion correction, ctf estimation, blob pick, extract, get particles'''
             jobtype_num_count[0] += 1
 
-            # 创建import movies job
-            '''Create import movies job'''
-            import_movies_parameters = mytoolbox.readjson(source_input_parameters_folder + 'import_movies_parameters.json')
-            new_import_movies_job = import_movies_class.QueueImportMoviesJob(import_movies_parameters)
-            print('Import movies job (', new_import_movies_job.uid, ') has been queued, please wait for job to complete...', flush=True)
-            import_movies_jobs_parents[new_import_movies_job.uid] = {'parameterpath': source_input_parameters_folder + 'import_movies_parameters.json'}
+            if (source_input_type == 'Movies'):
+                # 创建import movies job
+                '''Create import movies job'''
+                import_movies_parameters = mytoolbox.readjson(source_input_parameters_folder + 'import_movies_parameters.json')
+                new_import_movies_job = import_movies_class.QueueImportMoviesJob(import_movies_parameters)
+                print('Import movies job (', new_import_movies_job.uid, ') has been queued, please wait for job to complete...', flush=True)
+                import_movies_jobs_parents[new_import_movies_job.uid] = {'parameterpath': source_input_parameters_folder + 'import_movies_parameters.json'}
 
-            # 通过import movies job创建motion correction job
-            '''Create motion correction job through import movies job'''
-            motion_correction_parameters = mytoolbox.readjson(source_input_parameters_folder + 'patch_motion_correction_parameters.json')
-            new_motion_correction_job = motion_correction_class.QueuePatchMotionCorrectionJob(motion_correction_parameters, [new_import_movies_job.uid], ['imported_movies'])
-            motion_correction_jobs_parents[new_motion_correction_job.uid] = {'movies': [new_import_movies_job.uid], 'parameterpath': source_input_parameters_folder + 'patch_motion_correction_parameters.json'}
-            if not if_safe_mode:
-                print('Motion correction job (', new_motion_correction_job.uid, ') has been created, please wait for job to complete...', flush=True)
-                new_motion_correction_job.clear()
-            else:
-                print('Motion correction job (', new_motion_correction_job.uid, ') has been queued, please wait for job to complete...', flush=True)
+                # 通过import movies job创建motion correction job
+                '''Create motion correction job through import movies job'''
+                motion_correction_parameters = mytoolbox.readjson(source_input_parameters_folder + 'patch_motion_correction_parameters.json')
+                new_motion_correction_job = motion_correction_class.QueuePatchMotionCorrectionJob(motion_correction_parameters, [new_import_movies_job.uid], ['imported_movies'])
+                motion_correction_jobs_parents[new_motion_correction_job.uid] = {'movies': [new_import_movies_job.uid], 'parameterpath': source_input_parameters_folder + 'patch_motion_correction_parameters.json'}
+                if not if_safe_mode:
+                    print('Motion correction job (', new_motion_correction_job.uid, ') has been created, please wait for job to complete...', flush=True)
+                    new_motion_correction_job.clear()
+                else:
+                    print('Motion correction job (', new_motion_correction_job.uid, ') has been queued, please wait for job to complete...', flush=True)
+
+            elif (source_input_type == 'extension_movies'):
+                new_import_movies_job_uid = mytoolbox.readjson(source_input_parameters_folder + 'job_uid.json')['source_job_uid']
+                new_import_movies_job_group_name = mytoolbox.readjson(source_input_parameters_folder + 'job_uid.json')['source_group_name']
+
+                # 通过import movies job创建motion correction job
+                '''Create motion correction job through import movies job'''
+                motion_correction_parameters = mytoolbox.readjson(source_input_parameters_folder + 'patch_motion_correction_parameters.json')
+                new_motion_correction_job = motion_correction_class.QueuePatchMotionCorrectionJob(motion_correction_parameters, [new_import_movies_job_uid], [new_import_movies_job_group_name])
+                motion_correction_jobs_parents[new_motion_correction_job.uid] = {'movies': [new_import_movies_job_uid], 'parameterpath': source_input_parameters_folder + 'patch_motion_correction_parameters.json'}
+                if not if_safe_mode:
+                    print('Motion correction job (', new_motion_correction_job.uid, ') has been created, please wait for job to complete...', flush=True)
+                    new_motion_correction_job.clear()
+                else:
+                    print('Motion correction job (', new_motion_correction_job.uid, ') has been queued, please wait for job to complete...', flush=True)
 
             # 通过motion correction job创建ctf estimation job
             '''Create ctf estimation job through motion correction job'''
@@ -139,28 +155,44 @@ def ImportAndExtract(project_dir):
 
             whole_particles_list.append({'source_particle_job': new_extract_job.uid, 'source_particle_parameter_name': 'particles'})
 
-        elif (source_input_type == 'Micrographs'):
+        elif ((source_input_type == 'Micrographs') or (source_input_type == 'extension_micrographs')):
             # import micrographs，ctf estimation，blob pick，extract，获得particles
             '''import micrographs, ctf estimation, blob pick, extract, get particles'''
             jobtype_num_count[1] += 1
 
-            # 创建import micrographs job
-            '''Create import micrographs job'''
-            import_micrographs_parameters = mytoolbox.readjson(source_input_parameters_folder + 'import_micrographs_parameters.json')
-            new_import_micrographs_job = import_micrographs_class.QueueImportMicrographsJob(import_micrographs_parameters)
-            print('Import micrographs job (', new_import_micrographs_job.uid, ') has been queued, please wait for job to complete...', flush=True)
-            import_micrographs_jobs_parents[new_import_micrographs_job.uid] = {'parameterpath': source_input_parameters_folder + 'import_micrographs_parameters.json'}
+            if (source_input_type == 'Micrographs'):
+                # 创建import micrographs job
+                '''Create import micrographs job'''
+                import_micrographs_parameters = mytoolbox.readjson(source_input_parameters_folder + 'import_micrographs_parameters.json')
+                new_import_micrographs_job = import_micrographs_class.QueueImportMicrographsJob(import_micrographs_parameters)
+                print('Import micrographs job (', new_import_micrographs_job.uid, ') has been queued, please wait for job to complete...', flush=True)
+                import_micrographs_jobs_parents[new_import_micrographs_job.uid] = {'parameterpath': source_input_parameters_folder + 'import_micrographs_parameters.json'}
 
-            # 通过import micrographs job创建ctf estimation job
-            '''Create ctf estimation job through import micrographs job'''
-            ctf_estimation_parameters = mytoolbox.readjson(source_input_parameters_folder + 'patch_ctf_estimation_parameters.json')
-            new_ctf_estimation_job = ctf_estimation_class.QueuePatchCtfEstimationJob(ctf_estimation_parameters, [new_import_micrographs_job.uid], ['imported_micrographs'])
-            ctf_estimation_jobs_parents[new_ctf_estimation_job.uid] = {'micrographs': [new_import_micrographs_job.uid], 'parameterpath': source_input_parameters_folder + 'patch_ctf_estimation_parameters.json'}
-            if not if_safe_mode:
-                print('CTF estimation job (', new_ctf_estimation_job.uid, ') has been created, please wait for job to complete...', flush=True)
-                new_ctf_estimation_job.clear()
-            else:
-                print('CTF estimation job (', new_ctf_estimation_job.uid, ') has been queued, please wait for job to complete...', flush=True)
+                # 通过import micrographs job创建ctf estimation job
+                '''Create ctf estimation job through import micrographs job'''
+                ctf_estimation_parameters = mytoolbox.readjson(source_input_parameters_folder + 'patch_ctf_estimation_parameters.json')
+                new_ctf_estimation_job = ctf_estimation_class.QueuePatchCtfEstimationJob(ctf_estimation_parameters, [new_import_micrographs_job.uid], ['imported_micrographs'])
+                ctf_estimation_jobs_parents[new_ctf_estimation_job.uid] = {'micrographs': [new_import_micrographs_job.uid], 'parameterpath': source_input_parameters_folder + 'patch_ctf_estimation_parameters.json'}
+                if not if_safe_mode:
+                    print('CTF estimation job (', new_ctf_estimation_job.uid, ') has been created, please wait for job to complete...', flush=True)
+                    new_ctf_estimation_job.clear()
+                else:
+                    print('CTF estimation job (', new_ctf_estimation_job.uid, ') has been queued, please wait for job to complete...', flush=True)
+
+            elif (source_input_type == 'extension_micrographs'):
+                new_import_micrographs_job_uid = mytoolbox.readjson(source_input_parameters_folder + 'job_uid.json')['source_job_uid']
+                new_import_micrographs_job_group_name = mytoolbox.readjson(source_input_parameters_folder + 'job_uid.json')['source_group_name']
+
+                # 通过import micrographs job创建ctf estimation job
+                '''Create ctf estimation job through import micrographs job'''
+                ctf_estimation_parameters = mytoolbox.readjson(source_input_parameters_folder + 'patch_ctf_estimation_parameters.json')
+                new_ctf_estimation_job = ctf_estimation_class.QueuePatchCtfEstimationJob(ctf_estimation_parameters, [new_import_micrographs_job_uid], [new_import_micrographs_job_group_name])
+                ctf_estimation_jobs_parents[new_ctf_estimation_job.uid] = {'micrographs': [new_import_micrographs_job_uid], 'parameterpath': source_input_parameters_folder + 'patch_ctf_estimation_parameters.json'}
+                if not if_safe_mode:
+                    print('CTF estimation job (', new_ctf_estimation_job.uid, ') has been created, please wait for job to complete...', flush=True)
+                    new_ctf_estimation_job.clear()
+                else:
+                    print('CTF estimation job (', new_ctf_estimation_job.uid, ') has been queued, please wait for job to complete...', flush=True)
 
             # 通过ctf estimation job创建blob pick job
             '''Create blob pick job through ctf estimation job'''
@@ -186,21 +218,27 @@ def ImportAndExtract(project_dir):
 
             whole_particles_list.append({'source_particle_job': new_extract_job.uid, 'source_particle_parameter_name': 'particles'})
 
-        elif (source_input_type == 'Particles'):
+        elif ((source_input_type == 'Particles') or (source_input_type == 'extension_particles')):
             # 识别输入的particle job的类别，支持的particle job有：Import Particle Stack, Extract From Micrographs(Multi-GPU), Restack Particles
             '''Identify the category of the input particle job, supported particle jobs are: Import Particle Stack, Extract From Micrographs(Multi-GPU), Restack Particles'''
             jobtype_num_count[2] += 1
-            source_particle_jobuid = mytoolbox.readjson(source_input_parameters_folder + 'particle_job_uid.json')['source_particle_job_uid']
-            files_in_job_dir = os.listdir((str)(dealjobs.cshandle.find_project(dealjobs.project).dir()) + '/' + source_particle_jobuid)
-            if 'imported_particles.cs' in files_in_job_dir:
-                source_particle_parameter_name = 'imported_particles'
-            elif 'extracted_particles.cs' in files_in_job_dir:
-                source_particle_parameter_name = 'particles'
-            elif 'restacked_particles.cs' in files_in_job_dir:
-                source_particle_parameter_name = 'particles'
-            else:
-                print('Job type error...', flush=True)
-                exit()
+
+            if (source_input_type == 'Particles'):
+                source_particle_jobuid = mytoolbox.readjson(source_input_parameters_folder + 'particle_job_uid.json')['source_particle_job_uid']
+                files_in_job_dir = os.listdir((str)(dealjobs.cshandle.find_project(dealjobs.project).dir()) + '/' + source_particle_jobuid)
+                if 'imported_particles.cs' in files_in_job_dir:
+                    source_particle_parameter_name = 'imported_particles'
+                elif 'extracted_particles.cs' in files_in_job_dir:
+                    source_particle_parameter_name = 'particles'
+                elif 'restacked_particles.cs' in files_in_job_dir:
+                    source_particle_parameter_name = 'particles'
+                else:
+                    print('Job type error...', flush=True)
+                    exit()
+
+            elif (source_input_type == 'extension_particles'):
+                source_particle_jobuid = mytoolbox.readjson(source_input_parameters_folder + 'job_uid.json')['source_job_uid']
+                source_particle_parameter_name = mytoolbox.readjson(source_input_parameters_folder + 'job_uid.json')['source_group_name']
 
             whole_particles_list.append({'source_particle_job': source_particle_jobuid, 'source_particle_parameter_name': source_particle_parameter_name})
 

@@ -73,7 +73,7 @@ def CreateExternal_GetConfidence(DealJobs_instance, project_dir, source_particle
     '''Create a blank external job'''
 
     project = DealJobs_instance.cshandle.find_project(DealJobs_instance.project)
-    job = project.create_external_job(DealJobs_instance.workspace, title='Get Particle Scores')
+    job = project.create_external_job(DealJobs_instance.workspace, title='CryoRanker')
 
     # 创建和链接输入
     '''Create and link input'''
@@ -759,7 +759,8 @@ def SelectAndRefine(project_dir):
     # particle_number_truncation_points: 计算得到的截断点列表，列表类型
     confidence_dict = mytoolbox.readjson(globaldir + 'metadata/confidence_dict.json')
     sorted_confidence_dict = sorted(confidence_dict.items(), key=lambda x: x[1], reverse=True)
-    refine_grid_num_in_each_turn = parameters['refine_grid_num_in_each_turn']
+    refine_grid_num_in_first_turn = parameters['refine_grid_num_in_first_turn']
+    refine_grid_num_in_rest_each_turn = parameters['refine_grid_num_in_rest_each_turn']
     min_truncation_confidence = parameters['min_refine_truncation_confidence']
     max_truncation_confidence = parameters['max_refine_truncation_confidence']
     min_truncation_particle_num = 0
@@ -783,8 +784,8 @@ def SelectAndRefine(project_dir):
         min_truncation_particle_num = (int)(math.floor(max_truncation_particle_num / 2.0))
 
     refine_iteration_count = 0
-    refine_particle_number_step = (int)(math.floor(1.0 * (max_truncation_particle_num - min_truncation_particle_num) / (refine_grid_num_in_each_turn + 1)))
-    refine_particle_number_truncation_points = [(i * refine_particle_number_step + min_truncation_particle_num) for i in range(1, refine_grid_num_in_each_turn + 1)]
+    refine_particle_number_step = (int)(math.floor(1.0 * (max_truncation_particle_num - min_truncation_particle_num) / (refine_grid_num_in_first_turn + 1)))
+    refine_particle_number_truncation_points = [(i * refine_particle_number_step + min_truncation_particle_num) for i in range(1, refine_grid_num_in_first_turn + 1)]
     last_turn_chosen_job = None
     while (get_iteration_flag(refine_iteration_count, refine_particle_number_step)):
         # 通过external job筛选出几批particle做refine
@@ -893,9 +894,9 @@ def SelectAndRefine(project_dir):
             else:
                 truncation_point = refine_external_select_particles_jobs_truncation_points[best_refine_external_job_uid]
         refine_iteration_count += 1
-        refine_particle_number_step = refine_particle_number_step / ((refine_grid_num_in_each_turn / 2.0) + 1.0)
-        refine_particle_number_truncation_points = [(int)(math.floor(truncation_point - (refine_particle_number_step * (refine_grid_num_in_each_turn / 2.0)) + (i * refine_particle_number_step))) for i in range(refine_grid_num_in_each_turn + 1)]
-        refine_particle_number_truncation_points = refine_particle_number_truncation_points[:(int)(math.floor(refine_grid_num_in_each_turn / 2.0))] + refine_particle_number_truncation_points[((int)(math.floor(refine_grid_num_in_each_turn / 2.0)) + 1):]
+        refine_particle_number_step = refine_particle_number_step / ((refine_grid_num_in_rest_each_turn / 2.0) + 1.0)
+        refine_particle_number_truncation_points = [(int)(math.floor(truncation_point - (refine_particle_number_step * (refine_grid_num_in_rest_each_turn / 2.0)) + (i * refine_particle_number_step))) for i in range(refine_grid_num_in_rest_each_turn + 1)]
+        refine_particle_number_truncation_points = refine_particle_number_truncation_points[:(int)(math.floor(refine_grid_num_in_rest_each_turn / 2.0))] + refine_particle_number_truncation_points[((int)(math.floor(refine_grid_num_in_rest_each_turn / 2.0)) + 1):]
 
         last_turn_chosen_job = {'best_refine_nurefine_job_uid': best_refine_nurefine_job_uid, 'best_refine_external_job_uid': best_refine_external_job_uid, 'best_resolution': best_resolution, 'truncation_point': truncation_point}
 

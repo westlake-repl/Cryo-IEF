@@ -122,6 +122,19 @@ def CreateImportParametersFiles(project_dir, input_type, import_parameters_folde
         elif (input_type == 'particle'):
             mytoolbox.savetojson('Particles', globaldir + '/parameters/' + import_parameters_folder_name + '/input_type.json', False)
             mytoolbox.savetojson({'source_particle_job_uid': 'J'}, globaldir + '/parameters/' + import_parameters_folder_name + '/particle_job_uid.json', False)
+        elif (input_type == 'extension_movie'):
+            mytoolbox.savetojson('extension_movies', globaldir + '/parameters/' + import_parameters_folder_name + '/input_type.json', False)
+            mytoolbox.savetojson({'source_job_uid': 'J', 'source_group_name': None}, globaldir + '/parameters/' + import_parameters_folder_name + '/job_uid.json', False)
+            for item in ['patch_motion_correction_parameters.json', 'patch_ctf_estimation_parameters.json', 'blob_picker_parameters.json', 'extract_micrographs_parameters.json']:
+                shutil.copy(source_python_file_path + '/CryoWizard/parameters/' + item, globaldir + '/parameters/' + import_parameters_folder_name + '/' + item)
+        elif (input_type == 'extension_micrograph'):
+            mytoolbox.savetojson('extension_micrographs', globaldir + '/parameters/' + import_parameters_folder_name + '/input_type.json', False)
+            mytoolbox.savetojson({'source_job_uid': 'J', 'source_group_name': None}, globaldir + '/parameters/' + import_parameters_folder_name + '/job_uid.json', False)
+            for item in ['patch_ctf_estimation_parameters.json', 'blob_picker_parameters.json', 'extract_micrographs_parameters.json']:
+                shutil.copy(source_python_file_path + '/CryoWizard/parameters/' + item, globaldir + '/parameters/' + import_parameters_folder_name + '/' + item)
+        elif (input_type == 'extension_particle'):
+            mytoolbox.savetojson('extension_particles', globaldir + '/parameters/' + import_parameters_folder_name + '/input_type.json', False)
+            mytoolbox.savetojson({'source_job_uid': 'J', 'source_group_name': None}, globaldir + '/parameters/' + import_parameters_folder_name + '/job_uid.json', False)
         else:
             shutil.rmtree(globaldir + '/parameters/' + import_parameters_folder_name)
             print('Input type error...', flush=True)

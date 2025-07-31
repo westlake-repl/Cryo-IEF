@@ -1,0 +1,26 @@
+{
+  "name": "CryoWizard",
+  "description": "CryoWizard, a fully automated single-particle cryo-EM data processing pipeline. GitHub address: https://github.com/westlake-repl/Cryo-IEF.",
+  "version": "1.0",
+  "manifest_version": 3,
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://*:*/*"
+  ],
+  "action": {
+    "default_popup": "popup/index.html",
+    "default_icon": "icon.png"
+  },
+  "content_scripts": [
+    {
+      "js": ["scripts/jquery.js", "scripts/socket.io.js", "scripts/index.js"],
+      "matches": [
+        "http://*:*/browse/P*-W*-J*"
+      ]
+    }
+  ]
+}

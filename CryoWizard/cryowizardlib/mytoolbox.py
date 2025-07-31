@@ -25,9 +25,11 @@ class ThreadPool():
 
 class MultiThreadingRun():
     # 多线程运行自定义函数
-    def __init__(self, threadpoolmaxsize = 8):
+    # try_mode开启的情况下，setthread内的自定义function会使用try来运行，使得function即使失败也不中断主进程，线程也能正常回收
+    def __init__(self, threadpoolmaxsize=8, try_mode=False):
         self.threadpool = ThreadPool(threadpoolmaxsize)
         self.global_thread_lock = threading.Lock()
+        self.try_mode = try_mode
 
     def runwiththreadlock(self, function, **kwargs):
         # 用法举例：
@@ -45,7 +47,13 @@ class MultiThreadingRun():
         # multithread = mytoolbox.MultiThreadingRun(2)
         # multithread.setthread(testdef, a=1, b=2, c=3)
         def tempfunction():
-            function(**kwargs)
+            if self.try_mode:
+                try:
+                    function(**kwargs)
+                except:
+                    pass
+            else:
+                function(**kwargs)
             self.threadpool.add_thread()
         readythread = self.threadpool.get_thread()
         process = readythread(target=tempfunction)
