@@ -79,8 +79,8 @@ def inference_processed_data(model, valid_loader, accelerator, is_calculate_acc=
 
             features = accelerator.gather_for_metrics(features)
 
-            if y_p.shape[-1]==1:
-                scores_predicted= F.sigmoid(y_p.squeeze()).cpu().tolist()
+            if y_p.shape[-1] == 1:
+                scores_predicted = F.sigmoid(y_p.squeeze()).cpu().tolist()
             else:
                 y_p_softmax = F.softmax(y_p, dim=-1)
 
@@ -193,8 +193,8 @@ def model_inference(cfg, accelerator, use_features=False, features_max_num=50000
         state_dict = load_file(os.path.join(cfg['path_model_proj'], cfg['model_weight_name']), device='cpu')
     else:
         from CryoIEF_inference import download_model_weight
-        model_weight_save_path= os.path.join(cfg['path_proj_dir'], 'Cryo_IEF_checkpoint', cfg['model_weight_name'] )
-        model_weight_url=os.path.join(cfg['model_weight_url'], 'Cryo_IEF_checkpoint', cfg['model_weight_name'])
+        model_weight_save_path = os.path.join(cfg['path_proj_dir'], 'Cryo_IEF_checkpoint', cfg['model_weight_name'])
+        model_weight_url = os.path.join(cfg['model_weight_url'], 'Cryo_IEF_checkpoint', cfg['model_weight_name'])
         if accelerator.is_main_process:
             download_model_weight(url=model_weight_url, save_path=model_weight_save_path)
         accelerator.wait_for_everyone()
@@ -210,24 +210,18 @@ def model_inference(cfg, accelerator, use_features=False, features_max_num=50000
     transforms_list_val = get_transformers.get_val_transformations(cfg['augmentation_kwargs'],
                                                                    mean_std=(0.53786290141223, 0.11803331075935841))
 
-    mrcdata_val = CryoMetaData(mrc_path=cfg['raw_data_path'], emfile_path=None, tmp_data_save_path=cfg['path_result_dir'],
-                            processed_data_path=cfg['processed_data_path'],
-                            selected_emfile_path=None, cfg=cfg['preprocess_kwargs'], is_extra_valset=True,
-                            accelerator=accelerator)
+    mrcdata_val = CryoMetaData(mrc_path=cfg['raw_data_path'], emfile_path=None,
+                               tmp_data_save_path=cfg['path_result_dir'],
+                               processed_data_path=cfg['processed_data_path'],
+                               selected_emfile_path=None, cfg=cfg['preprocess_kwargs'], is_extra_valset=True,
+                               accelerator=accelerator)
 
     valset = CryoEMDataset(metadata=mrcdata_val,
-                                 needs_aug2=False,
-                                 # is_Normalize=cfg['augmentation_kwargs']['is_Normalize'],
-                                 )
+                           needs_aug2=False,
+                           # is_Normalize=cfg['augmentation_kwargs']['is_Normalize'],
+                           )
     valset.get_transforms(transforms_list_val)
     valset.local_crops_number = 0
-
-    if len(cfg['valset_name']) > 0:
-        _, valset_index, _, _, _ = mrcdata_val.preprocess_trainset_valset_index(cfg['valset_name'],
-                                                                                is_balance=True,
-                                                                                max_resample_num_val=cfg[
-                                                                                    'max_resample_number'])
-        valset = torch.utils.data.Subset(valset, valset_index)
 
     val_dataloader = torch.utils.data.DataLoader(valset,
                                                  batch_size=batch_size,
@@ -260,7 +254,6 @@ def model_inference(cfg, accelerator, use_features=False, features_max_num=50000
         # labels_predicted_pd = pd.DataFrame(data=results['class_p'], columns=['labels_predicted'])
         # labels_predicted_pd.to_csv(os.path.join(cfg['path_result_dir'], 'labels_predicted.csv'), index=False)
 
-
         scores_list_pd = pd.DataFrame(data=results['scores_predicted_list'], columns=['scores_predicted_list'])
         scores_list_pd.to_csv(os.path.join(cfg['path_result_dir'], 'scores_predicted_list.csv'), index=False)
 
@@ -278,7 +271,7 @@ def model_inference(cfg, accelerator, use_features=False, features_max_num=50000
 
 
 def cryoRanker_main(cfg=None, job_path=None, cache_file_path=None, accelerator=None, use_features=False,
-                    features_max_num=1000000):
+                    features_max_num=1000000,num_processes=8):
     '''distribution'''
     if accelerator is None:
         accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=96000))])
@@ -317,7 +310,7 @@ def cryoRanker_main(cfg=None, job_path=None, cache_file_path=None, accelerator=N
 
     '''inference'''
     features_all = []
-    if not os.path.exists(cfg['path_result_dir'] + '/scores_predicted_list.csv') :
+    if not os.path.exists(cfg['path_result_dir'] + '/scores_predicted_list.csv'):
         processed_data_path = os.path.join(cfg['path_result_dir'], 'processed_data')
         new_cs_data_path = processed_data_path + '/new_particles.cs'
 
@@ -342,7 +335,7 @@ def cryoRanker_main(cfg=None, job_path=None, cache_file_path=None, accelerator=N
                                         save_raw_data=False,
                                         save_FT_data=False,
                                         is_to_int8=True,
-                                        num_processes=6
+                                        num_processes=num_processes
                                         )
 
                 accelerator.print(
@@ -376,17 +369,31 @@ def cryoRanker_main(cfg=None, job_path=None, cache_file_path=None, accelerator=N
 
     return new_cs_data, scores, features_all
 
-def select_particles_by_score(new_cs_data, scores, num_select,save_path):
+
+def select_particles_by_score(new_cs_data, scores, num_select, save_path, num_start=0, num_resample=None, ):
     '''select particles by score, generate a new cs/star file'''
     scores = np.array(scores)
     sorted_indices_list = np.argsort(-scores).tolist()
+    if num_start > 0 and num_start < 1:
+        num_start = num_start * len(sorted_indices_list)
+    num_start = int(num_start)
+    if num_select > 0 and num_select < 1:
+        num_select = num_select * len(sorted_indices_list)
+    num_select = int(num_select)
     if num_select > len(sorted_indices_list):
         num_select = len(sorted_indices_list)
-    selected_indices = sorted_indices_list[:num_select]
+    num_end = num_start + num_select
+    if num_end > len(sorted_indices_list):
+        num_end = len(sorted_indices_list)
+    selected_indices = sorted_indices_list[num_start:num_end]
+    selected_scores = scores[selected_indices]
+    if num_resample is not None and num_resample > 0 and num_resample < len(selected_indices):
+        selected_indices = np.random.choice(selected_indices, size=num_resample, replace=False).tolist()
     cs_data_selected = new_cs_data.take(selected_indices)
-    cs_save_path = os.path.join(save_path, 'selected_particles_top_{}.cs'.format(num_select))
+    cs_save_path = os.path.join(save_path, f'selected_particles_{num_start}_to_{num_end}.cs')
     cs_data_selected.save(cs_save_path)
     cs2star(cs_save_path, cs_save_path.replace('.cs', '.star'))
+    return selected_scores
 
 
 if __name__ == '__main__':
@@ -410,11 +417,12 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=None, type=int)
     parser.add_argument('--model_name', default=None, type=str)
     # parser.add_argument('--num_select', default=None, type=float)
-    parser.add_argument('--num_select', default=40000, type=int)
+    parser.add_argument('--num_select', default=40000, type=float)
+    parser.add_argument('--num_start', default=0, type=float)
     parser.add_argument('--classifier', default=None, type=str)
     parser.add_argument('--output_size', default=None, type=int)
-
-
+    parser.add_argument('--num_resample', default=None, type=int)
+    parser.add_argument('--num_processes', default=None, type=int)
 
     args = parser.parse_args()
 
@@ -449,6 +457,15 @@ if __name__ == '__main__':
     if args.num_select is not None:
         cfg['num_select'] = args.num_select
 
+    if args.num_start is not None:
+        cfg['num_start'] = args.num_start
+
+    if args.num_resample is not None:
+        cfg['num_resample'] = args.num_resample
+
+    if args.num_processes is not None:
+        cfg['num_processes'] = args.num_processes
+
     if args.classifier is not None:
         cfg['model']['classifier'] = args.classifier
 
@@ -461,13 +478,21 @@ if __name__ == '__main__':
         torch.distributed.barrier(device_ids=[int(os.environ["LOCAL_RANK"])])
 
     new_cs_data, scores, features_all = cryoRanker_main(cfg=cfg, job_path=cfg['raw_data_path'],
-                                                        cache_file_path=cfg['path_result_dir'], use_features=True, accelerator=accelerator)
+                                                        cache_file_path=cfg['path_result_dir'], use_features=True,
+                                                        accelerator=accelerator,num_processes=cfg['num_processes'])
 
-    if accelerator.is_local_main_process:
+    if accelerator.is_main_process:
         if cfg['num_select'] is not None and cfg['num_select'] > 0:
             accelerator.print('Selecting particles by score...')
-            selected_particles = select_particles_by_score(new_cs_data=new_cs_data, scores=scores,num_select= cfg['num_select'], save_path= cfg['path_result_dir'])
-            accelerator.print('Selected particles saved to {}'.format(cfg['path_result_dir'] + '/selected_particles_top_{}.cs'.format(cfg['num_select'])))
-            accelerator.print('Selected particles saved to {}'.format(cfg['path_result_dir'] + '/selected_particles_top_{}.star'.format(cfg['num_select'])))
+            selected_scores = select_particles_by_score(new_cs_data=new_cs_data, scores=scores,
+                                                        num_select=cfg['num_select'], num_start=cfg['num_start'],
+                                                        num_resample=cfg['num_resample'],
+                                                        save_path=cfg['path_result_dir'])
+            accelerator.print(
+                f'Max score: {np.max(selected_scores)}, Min score: {np.min(selected_scores)}, Mean score: {np.mean(selected_scores)}')
+            accelerator.print('Selected particles saved in {}'.format(
+                cfg['path_result_dir']))
+            # accelerator.print('Selected particles saved to {}'.format(
+            #     cfg['path_result_dir'] + '/selected_particles_top_{}.star'.format(cfg['num_select'])))
     accelerator.wait_for_everyone()
     accelerator.state.destroy_process_group()

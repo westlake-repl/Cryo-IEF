@@ -12,8 +12,6 @@ pixelsize: null
 particle_csfile_path: null
 
 valset_name: []
-max_resample_number: 50000
-max_resample_selected: 50000
 except_class_num: 0
 is_calculate_acc: false
 use_features: true
@@ -21,7 +19,10 @@ batch_size: 512
 k: 8
 cut_ratio: 0.0
 
+num_processes: 8
 num_select: 0
+num_start: 0
+num_resample: null
 
 
 model:

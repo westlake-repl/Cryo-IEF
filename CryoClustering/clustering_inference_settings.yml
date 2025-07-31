@@ -23,13 +23,15 @@ model:
    model_name: moco_v3
    use_bnn_head: false
    use_edl_loss: false
-   num_classes: 2
+#   num_classes: 2
+   num_classes: 1
    backbone_name: 'vit_base'
    use_bn: true
    stop_grad_conv1: false
    patch_size: 14
 #   classifier: '2linear'
-   classifier: '1linear'
+#   classifier: '1linear'
+   classifier: 'new'
 
 
 

@@ -3,6 +3,9 @@
 from argparse import ArgumentParser
 import math
 import os
+
+import numpy as np
+
 import CryoWizard.cryowizardlib.mytoolbox as mytoolbox
 import yaml
 from easydict import EasyDict
@@ -213,7 +216,11 @@ if __name__ == '__main__':
                 particle_diameter = (int)(cfg['CreateImportParameterFiles_settings']['particle_diameter'])
                 blob_pick_parameters['Minimum particle diameter (A)'] = (particle_diameter - 10) if ((particle_diameter - 10) >= 0) else 0
                 blob_pick_parameters['Maximum particle diameter (A)'] = (particle_diameter + 10) if ((particle_diameter + 10) >= 0) else 0
-                extract_parameters['Extraction box size (pix)'] = (int)(math.floor((float)(particle_diameter) / particle_pixel_size / 5.0) * 10.0)
+                if ((1.0 - particle_pixel_size) > np.fabs(1.0 - 2.0 * particle_pixel_size)):
+                    motion_correction_parameters['Output F-crop factor'] = '1/2'
+                    extract_parameters['Extraction box size (pix)'] = (int)(math.floor((float)(particle_diameter) / (particle_pixel_size * 2.0) / 5.0) * 10.0)
+                else:
+                    extract_parameters['Extraction box size (pix)'] = (int)(math.floor((float)(particle_diameter) / particle_pixel_size / 5.0) * 10.0)
             if cfg['CreateImportParameterFiles_settings']['gpu_num'] is not None:
                 motion_correction_parameters['Number of GPUs to parallelize'] = (int)(cfg['CreateImportParameterFiles_settings']['gpu_num'])
                 ctf_estimation_parameters['Number of GPUs to parallelize'] = (int)(cfg['CreateImportParameterFiles_settings']['gpu_num'])
