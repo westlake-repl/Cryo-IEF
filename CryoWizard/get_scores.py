@@ -47,11 +47,17 @@ files_in_job_dir = os.listdir((str)(dealjobs.cshandle.find_project(dealjobs.proj
 if 'imported_particles.cs' in files_in_job_dir:
     source_particles_cs = csd.Dataset.load((str)(dealjobs.cshandle.find_project(dealjobs.project).dir()) + '/' + source_particle_job + '/imported_particles.cs')
 elif 'extracted_particles.cs' in files_in_job_dir:
-    source_particles_cs = csd.Dataset.load((str)(dealjobs.cshandle.find_project(dealjobs.project).dir()) + '/' + source_particle_job + '/extracted_particles.cs')
+    extracted_particles_cs = csd.Dataset.load((str)(dealjobs.cshandle.find_project(dealjobs.project).dir()) + '/' + source_particle_job + '/extracted_particles.cs')
+    passthrough_particles_cs = csd.Dataset.load((str)(dealjobs.cshandle.find_project(dealjobs.project).dir()) + '/' + source_particle_job + '/' + source_particle_job + '_passthrough_particles.cs')
+    source_particles_cs = csd.Dataset.innerjoin(extracted_particles_cs, passthrough_particles_cs)
 elif 'restacked_particles.cs' in files_in_job_dir:
-    source_particles_cs = csd.Dataset.load((str)(dealjobs.cshandle.find_project(dealjobs.project).dir()) + '/' + source_particle_job + '/restacked_particles.cs')
+    restacked_particles_cs = csd.Dataset.load((str)(dealjobs.cshandle.find_project(dealjobs.project).dir()) + '/' + source_particle_job + '/restacked_particles.cs')
+    passthrough_particles_cs = csd.Dataset.load((str)(dealjobs.cshandle.find_project(dealjobs.project).dir()) + '/' + source_particle_job + '/' + source_particle_job + '_passthrough_particles.cs')
+    source_particles_cs = csd.Dataset.innerjoin(restacked_particles_cs, passthrough_particles_cs)
 elif 'split_0000.cs' in files_in_job_dir:
-    source_particles_cs = csd.Dataset.load((str)(dealjobs.cshandle.find_project(dealjobs.project).dir()) + '/' + source_particle_job + '/split_0000.cs')
+    split_0_cs = csd.Dataset.load((str)(dealjobs.cshandle.find_project(dealjobs.project).dir()) + '/' + source_particle_job + '/split_0000.cs')
+    passthrough_split_0_cs = csd.Dataset.load((str)(dealjobs.cshandle.find_project(dealjobs.project).dir()) + '/' + source_particle_job + '/' + source_particle_job + '_passthrough_split_0.cs')
+    source_particles_cs = csd.Dataset.innerjoin(split_0_cs, passthrough_split_0_cs)
 else:
     accelerator.print('Job type error...', flush=True)
     exit()

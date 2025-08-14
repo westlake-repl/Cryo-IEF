@@ -320,9 +320,10 @@ def ImportAndExtract(project_dir):
 
         print('All particles prepared!', flush=True)
 
-    if (jobtype_num_count == [0, 0, 1]):
-        mytoolbox.savetojson(whole_particles_list[0]['source_particle_job'], globaldir + 'metadata/particle_job_uid.json', False)
-    else:
+    # if (jobtype_num_count == [0, 0, 1]):
+    #     mytoolbox.savetojson(whole_particles_list[0]['source_particle_job'], globaldir + 'metadata/particle_job_uid.json', False)
+    # else:
+    if True:
         particle_sets_tool_source_particle_job_list = []
         particle_sets_tool_source_particle_parameter_name_list = []
         for item in whole_particles_list:
