@@ -13,7 +13,7 @@ The complete CryoWizard pipeline can be executed via a single command:
         --ImportAndExtract \
         --SelectAndRefine \
         --input_type movie \
-        --cryosparc_username 'your_cryosparc_username@xxx.xxx' \
+        --cryosparc_username 'your_cryosparc_username' \
         --cryosparc_password 'your_cryosparc_password' \
         --cryosparc_project P1 \
         --cryosparc_workspace W1 \
@@ -38,7 +38,7 @@ Also, micrographs can be specified as input:
         --ImportAndExtract \
         --SelectAndRefine \
         --input_type micrograph \
-        --cryosparc_username 'your_cryosparc_username@xxx.xxx' \
+        --cryosparc_username 'your_cryosparc_username' \
         --cryosparc_password 'your_cryosparc_password' \
         --cryosparc_project P1 \
         --cryosparc_workspace W1 \
@@ -60,7 +60,7 @@ or a cryoSPARC particle job (e.g., `Import Particle Stack`, `Extract From Microg
         --ImportAndExtract \
         --SelectAndRefine \
         --input_type particle \
-        --cryosparc_username 'your_cryosparc_username@xxx.xxx' \
+        --cryosparc_username 'your_cryosparc_username' \
         --cryosparc_password 'your_cryosparc_password' \
         --cryosparc_project P1 \
         --cryosparc_workspace W1 \
@@ -76,7 +76,7 @@ To create a pipeline project folder and generate parameter files, execute:
     (cryo_ief) $ python CryoWizard_main.py \
         --path_result_dir 'path/to/save/your/cryowizard/metadata/folder' \
         --CreateParameterFiles \
-        --cryosparc_username 'your_cryosparc_username@xxx.xxx' \
+        --cryosparc_username 'your_cryosparc_username' \
         --cryosparc_password 'your_cryosparc_password' \
         --cryosparc_project P1 \
         --cryosparc_workspace W1 \

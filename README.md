@@ -99,7 +99,7 @@ This cache can be safely deleted after inference.
     (cryo_ief) $ cd path/to/Cryo-IEF
     (cryo_ief) $ python CryoWizard_main.py \
         --CryoWizardInstall \
-        --cryosparc_username 'your_cryosparc_username@XXX.XXX' \
+        --cryosparc_username 'your_cryosparc_username' \
         --cryosparc_password 'your_cryosparc_password' \
         --cryosparc_license 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX' \
         --cryosparc_hostname your_host_name \
