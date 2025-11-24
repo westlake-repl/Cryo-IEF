@@ -52,7 +52,9 @@ Upon successful execution, the Conda environment setup will be complete.
 
 ### Step 2: Download Model Weights
 
-Model weights are accessible via [HuggingFace](https://huggingface.co/westlake-repl/Cryo-IEF). Alternatively, they can be downloaded from the [Cryo-IEF google drive](https://drive.google.com/drive/folders/1C9jIdC5B58ohAwrfRalTngRtLtgIWfM8?usp=sharing) and [CryoRanker google drive](https://drive.google.com/drive/folders/10SUzFZB2s9sGCDkYF258Yx1C11D3tiph?usp=drive_link). 
+Model weights are accessible via [HuggingFace](https://huggingface.co/westlake-repl/Cryo-IEF). 
+
+[//]: # (Alternatively, they can be downloaded from the [Cryo-IEF google drive]&#40;https://drive.google.com/drive/folders/1C9jIdC5B58ohAwrfRalTngRtLtgIWfM8?usp=sharing&#41; and [CryoRanker google drive]&#40;https://drive.google.com/drive/folders/10SUzFZB2s9sGCDkYF258Yx1C11D3tiph?usp=drive_link&#41;. )
 This model is intended for **academic research only**. Commercial use is prohibited without explicit permission.
 
 
