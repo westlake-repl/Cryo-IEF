@@ -8,13 +8,16 @@ We present the Cryo-EM Image Evaluation Foundation (Cryo-IEF) model, which has b
 
 Please cite the following paper if this work is useful for your research:
 ```
-@article{yan2024comprehensive,
-  title={A comprehensive foundation model for cryo-EM image processing},
-  author={Yan, Yang and Fan, Shiqi and Yuan, Fajie and Shen, Huaizong},
-  journal={bioRxiv},
-  pages={2024--11},
-  year={2024},
-  publisher={Cold Spring Harbor Laboratory}
+@article{yan_comprehensive_2025,
+	title = {A comprehensive foundation model for cryo-{EM} image processing},
+	issn = {1548-7105},
+	url = {https://doi.org/10.1038/s41592-025-02916-8},
+	doi = {10.1038/s41592-025-02916-8},
+	abstract = {Cryogenic electron microscopy (cryo-EM) has become a premier technique for determining high-resolution structures of biological macromolecules. However, its broad application is constrained by the demand for specialized expertise. Here, to address this limitation, we introduce the Cryo-EM Image Evaluation Foundation (Cryo-IEF) model, a versatile tool pre-trained on {\textasciitilde}65 million cryo-EM particle images through unsupervised learning. Cryo-IEF performs diverse cryo-EM processing tasks, including particle classification by structure, pose-based clustering and image quality assessment. Building on this foundation, we developed CryoWizard, a fully automated single-particle cryo-EM processing pipeline enabled by fine-tuned Cryo-IEF for efficient particle quality ranking. CryoWizard resolves high-resolution structures across samples of varied properties and effectively mitigates the prevalent challenge of preferred orientation in cryo-EM.},
+	journal = {Nature Methods},
+	author = {Yan, Yang and Fan, Shiqi and Yuan, Fajie and Shen, Huaizong},
+	month = nov,
+	year = {2025},
 }
 ```
 
