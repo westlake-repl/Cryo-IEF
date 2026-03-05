@@ -97,6 +97,7 @@ This cache can be safely deleted after inference.
 
 ## CryoWizard ![Beta Badge](https://img.shields.io/badge/status-beta-yellow)
 ⚠️ CryoWizard is in beta. Expect updates and potential changes to features. Please report any issues encountered.
+> **Caution**: CryoWizard has been moved to a new repository: [https://github.com/SMART-StructBio-AI/CryoWizard](https://github.com/SMART-StructBio-AI/CryoWizard). All future updates and maintenance will be carried out there. This repository is no longer actively maintained, and we will no longer respond to CryoWizard-related issues here.
 
 ### Run Install Progress
 
