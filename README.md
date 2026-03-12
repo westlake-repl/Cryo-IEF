@@ -11,7 +11,7 @@ Building on Cryo-IEF, several downstream tools have been developed that apply it
 | Tool | Description | Repository |
 |------|-------------|------------|
 | **CryoRanker** | Fine-tunes Cryo-IEF to rank particle images by quality for automated particle selection | This repository |
-| **CryoDECO** | Applies Cryo-IEF features for decoy detection and quality-based particle filtering | [GitHub](https://github.com/yanyang1998/CryoDECO) |
+| **CryoDECO** | An _ab initio_ heterogeneous reconstruction algorithm that leverages Cryo-IEF priors to deconstruct compositional and conformational heterogeneity | [GitHub](https://github.com/yanyang1998/CryoDECO) |
 | **CryoWizard** | Integrates CryoRanker into a fully automated single-particle cryo-EM processing pipeline | [GitHub](https://github.com/SMART-StructBio-AI/CryoWizard) |
 
 Please cite the following paper if this work is useful for your research:
@@ -111,7 +111,7 @@ CryoRanker accepts the same cryoSPARC job types as Cryo-IEF (`Extracted Particle
 
 ### CryoDECO
 
-CryoDECO leverages Cryo-IEF representations for **decoy detection and particle filtering**. It identifies and removes low-quality or artifactual particles from cryo-EM datasets, improving the signal used for 3D reconstruction.
+CryoDECO is an _ab initio_ heterogeneous reconstruction algorithm that leverages structural priors from the Cryo-IEF foundation model to resolve complex structural mixtures in cryo-EM data. By bypassing the random initialization bottleneck common in traditional deep learning approaches, it enables robust classification of both **compositional and conformational heterogeneity**.
 
 > For full documentation and the latest updates, please visit the CryoDECO repository:
 > **[https://github.com/yanyang1998/CryoDECO](https://github.com/yanyang1998/CryoDECO)**
