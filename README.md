@@ -3,6 +3,8 @@
 
 <a href="https://doi.org/10.1038/s41592-025-02916-8"><img src="https://img.shields.io/badge/Paper-Nature%20Methods-blue" style="max-width: 100%;"></a>
 <a href="https://huggingface.co/westlake-repl/Cryo-IEF"><img src="https://img.shields.io/badge/Hugging%20Face-FFD21E?logo=huggingface&logoColor=000" style="max-width: 100%;"></a>
+[![Downloads](https://static.pepy.tech/badge/cryodata)](https://pepy.tech/project/cryodata)
+
 
 We present **Cryo-IEF** (Cryo-EM Image Evaluation Foundation) — a foundation model pre-trained on approximately 65 million cryo-EM particle images via unsupervised learning. Cryo-IEF provides powerful general-purpose representations for cryo-EM data, excelling at tasks such as classifying particles by structure, clustering particles by pose, and assessing image quality.
 
