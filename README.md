@@ -41,6 +41,8 @@ Create and activate a dedicated conda environment, then install dependencies:
     (cryo_ief) $ cd path/to/Cryo-IEF
     (cryo_ief) $ pip install -r requirements.txt
 
+> **[CryoData](https://github.com/yanyang1998/cryoief-data)** is used internally for cryo-EM data preprocessing (normalization, LMDB conversion, and PyTorch integration). It is included in `requirements.txt` and installed automatically.
+
 Installation may take several minutes. Subsequently, `cryosparc-tools` must be installed separately to match your CryoSPARC version. To identify the correct version, first run:
 
     (cryo_ief) $ pip install cryosparc-tools==999.999.999
